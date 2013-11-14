@@ -17,8 +17,6 @@
  *
  */
 
-#include <configuration.hpp>
-
 #include <iostream>
 using std::cout;
 using std::cerr;
@@ -34,6 +32,8 @@ using std::ofstream;
 using std::vector;
 #include <iomanip>
 using std::setprecision;
+
+#include <configuration.hpp>
 
 #include <ArgumentList.hpp>
 using isa::utils::ArgumentList;
@@ -56,6 +56,8 @@ using PulsarSearch::SNR;
 using isa::OpenCL::CLData;
 #include <Exceptions.hpp>
 using isa::Exceptions::OpenCLError;
+#include <InitializeOpenCL.hpp>
+using isa::OpenCL::initializeOpenCL;
 
 
 int main(int argc, char * argv[]) {
@@ -107,7 +109,7 @@ int main(int argc, char * argv[]) {
 	vector< CLData< dataType > * > * input = new vector< CLData< dataType > * >(1);
 	if ( dataLOFAR ) {
 		readLOFAR(headerFile, dataFile, obs, *input);
-	} else if ( SIGPROC ) {
+	} else if ( dataSIGPROC ) {
 		// TODO: implement SIGPROC pipeline
 	}
 
@@ -142,7 +144,7 @@ int main(int argc, char * argv[]) {
 	}
 	secondsToBuffer = static_cast< unsigned int >(ceil(static_cast< float >(nrSamplesPerChannel) / obs.getNrSamplesPerPaddedSecond()));
 
-	dispersedData.allocateHostData(secondsToBuffer * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
+	dispersedData.allocateHostData(secondsToBuffer * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
 	snrTable.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedDMs());
 
 	try {
@@ -181,8 +183,8 @@ int main(int argc, char * argv[]) {
 	if ( DEBUG ) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
-		hostMemory += shifts.getHostDataSize() + dispersedData.getHostDataSize() + snrTable.getHostDataSize();
-		deviceMemory += shifts.getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + counterData.getDeviceDataSize() + snrTable.getDeviceDataSize();
+		hostMemory += shifts->getHostDataSize() + dispersedData.getHostDataSize() + snrTable.getHostDataSize();
+		deviceMemory += shifts->getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + counterData.getDeviceDataSize() + snrTable.getDeviceDataSize();
 
 		cout << "Allocated host memory: " << fixed << setprecision(3) << giga(hostMemory) << endl;
 		cout << "Allocated device memory: " << fixed << setprecision(3) << giga(deviceMemory) << endl;
