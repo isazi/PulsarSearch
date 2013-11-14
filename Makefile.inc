@@ -29,7 +29,7 @@ else
 	PHI_CFLAGS := -std=c++0x -O0 -g3 -Wall -openmp -vec-report3
 endif
 
-LDFLAGS := -lm -lOpenCL
+LDFLAGS := -lm -lOpenCL -lhdf5 -lhdf5_cpp
 CPU_LDFLAGS := -lm
 PHI_LDFLAGS := -lm
 
