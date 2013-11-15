@@ -7,3 +7,5 @@ std::string dataName("float");
 const bool DEBUG = false;
 // Memory padding
 const unsigned int padding = 32;
+
+// Tuned parameters

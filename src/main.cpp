@@ -50,6 +50,8 @@ using PulsarSearch::Dedispersion;
 using PulsarSearch::getShifts;
 #include <Folding.hpp>
 using PulsarSearch::Folding;
+#include <Transpose.hpp>
+using PulsarSearch::Transpose;
 #include <SNR.hpp>
 using PulsarSearch::SNR;
 #include <CLData.hpp>
@@ -58,6 +60,8 @@ using isa::OpenCL::CLData;
 using isa::Exceptions::OpenCLError;
 #include <InitializeOpenCL.hpp>
 using isa::OpenCL::initializeOpenCL;
+#include <Timer.hpp>
+using isa::utils::Timer;
 
 
 int main(int argc, char * argv[]) {
@@ -190,14 +194,97 @@ int main(int argc, char * argv[]) {
 		cout << "Allocated device memory: " << fixed << setprecision(3) << giga(deviceMemory) << endl;
 	}
 
-	// Search loop
-	for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
+	// Generate OpenCL kernels
+	Dedispersion< dataType > clDedisperse("clDedisperse", dataName);
+	Transpose< dataType > clTranspose("clTranspose", dataName);
+	Folding< dataType > clFold("clFold", dataName);
+	SNR< dataType > clSNR("clSNR", dataName);
+	try {
+		clDedisperse.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
+		// TODO: tuned parameters
+		clDedisperse.setNrSamplesPerBlock();
+		clDedisperse.setNrDMsPerBlock();
+		clDedisperse.setNrSamplesPerThread();
+		clDedisperse.setNrDMsPerThread();
+		clDedisperse.setNrSamplesPerDispersedChannel(secondsToBuffer * observation.getNrSamplesPerPaddedSecond());
+		clDedisperse.setObservation(&obs);
+		clDedisperse.setShifts(shifts);
+		clDedisperse.generateCode();
+		clTranspose.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
+		clTranspose.setObservation(&observation);
+		// TODO: tuned parameters
+		clTranspose.setNrThreadsPerBlock();
+		clTranspose.generateCode();
+		clFold.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
+		clFold.setObservation(&observation);
+		// TODO: tuned parameters
+		clFold.setNrDMsPerBlock();
+		clFold.setNrPeriodsPerBlock();
+		clFold.setNrBinsPerBlock();
+		clFold.setNrDMsPerThread();
+		clFold.setNrPeriodsPerThread();
+		clFold.setNrBinsPerThread();
+		clFold.generateCode();
+		clSNR.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
+		clSNR.setObservation(&observation);
+		// TODO: tuned parameters
+		clSNR.setNrDMsPerBlock();
+		clSNR.setNrPeriodsPerBlock();
+		clSNR.setPulsarPipeline();
+		clSNR.generateCode();
+	} catch ( OpenCLError err ) {
+		cerr << err.what() << endl;
+		return 1;
+	}
 
+	// Search loop
+	Timer searchTime("SearchTimer");
+	for ( unsigned int second = 0; second <= obs.getNrSeconds() - secondsToBuffer; second++ ) {
+		if ( DEBUG ) {
+			cout << "Processing second " << second << endl;
+		}
+		searchTime.start();
+		// Prepare the input
+		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
+				memcpy(dispersedData.getRawHostDataAt((channel * secondsToBuffer * obs.getNrSamplesPerPaddedSecond()) + (chunk * obs.getNrSamplesPerSecond())), (input.at(second + chunk))->getRawHostDataAt(channel * obs.getNrSamplesPerPaddedSecond()), obs.getNrSamplesPerSecond() * sizeof(T));
+			}
+		}
+
+		// Run the kernels
+		try {
+			dispersedData.copyHostToDevice();
+			clDedisperse(&dispersedData, &dedispersedData);
+			clTranspose(&dedispersedData, &transposedData);
+			clFold(&transposedData, &foldedData, &counterData);
+		} catch ( OpenCLError err ) {
+			cerr << err.what() << endl;
+			return 1;
+		}
+		searchTime.stop();
+	}
+
+	// Release unnecessary memory
+	delete [] input;
+	try {
+		dispersedData.deleteDeviceData();
+		dispersedData.deleteHostData();
+		dedispersedData.deleteDeviceData();
+		dedispersedData.deleteHostData();
+		transposedData.deleteDeviceData();
+		transposedData.deleteHostData();
+		counterData.deleteDeviceData();
+		counterData.deleteHostData();
+	} catch ( OpenCLError err ) {
+		cerr << err.what() << endl;
 	}
 
 	// Store output
 	try {
+		clSNR(&foldedData, &snrTable);
 		snrTable.copyDeviceToHost();
+		foldedData.deleteHostData();
+		foldedData.deleteDeviceData();
 	} catch ( OpenCLError err ) {
 		cerr << err.what() << endl;
 		return 1;
@@ -210,6 +297,11 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	output.close();
+
+	if ( DEBUG ) {
+		cout << "# processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond totalTime averageTime err inputAverageTime err outputAverageTime err" << endl;
+		cout << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " searchTime.getStdDev() << " " << dispersedData.getTimer().getAverageTime() << " " << dispersedData.getTimer().getStdDev() << " " << snrTable.getTimer().getAverageTime() << " " << snrTable.getTimer().getStdDev() << endl;
+	}
 
 	return 0;
 }
