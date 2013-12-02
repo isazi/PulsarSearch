@@ -1,21 +1,20 @@
-/*
- * Copyright (C) 2013
- * Alessio Sclocco <a.sclocco@vu.nl>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
+//
+// Copyright (C) 2013
+// Alessio Sclocco <a.sclocco@vu.nl>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
 
 #include <iostream>
 using std::cout;
@@ -48,10 +47,12 @@ using AstroData::readLOFAR;
 using PulsarSearch::Dedispersion;
 #include <Shifts.hpp>
 using PulsarSearch::getShifts;
+#include <Bins.hpp>
+using PulsarSearch::getNrSamplesPerBin;
 #include <Folding.hpp>
 using PulsarSearch::Folding;
 #include <Transpose.hpp>
-using PulsarSearch::Transpose;
+using isa::OpenCL::Transpose;
 #include <SNR.hpp>
 using PulsarSearch::SNR;
 #include <CLData.hpp>
@@ -102,8 +103,8 @@ int main(int argc, char * argv[]) {
 		obs.setNrDMs(args.getSwitchArgument< unsigned int >("-dm_number"));
 		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first"));
 		obs.setNrPeriods(args.getSwitchArgument< unsigned int >("-period_number"));
+		obs.setPeriodStep(args.getSwitchArgument< unsigned int >("-period_step"));
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
-		obs.setPeriodStep(obs.getNrBins());
 	} catch ( exception &err ) {
 		cerr << err.what() << endl;
 		return 1;
@@ -134,12 +135,14 @@ int main(int argc, char * argv[]) {
 	unsigned int nrSamplesPerChannel = 0;
 	unsigned int secondsToBuffer = 0;
 	CLData< unsigned int > * shifts = getShifts(obs);
+	CLData< unsigned int > * nrSamplesPerBin = getNrSamplesPerBin(obs);
 	CLData< dataType > dispersedData("DispersedData", true);
 	CLData< dataType > dedispersedData("DedispersedData", true);
 	CLData< dataType > transposedData("TransposedData", true);
 	CLData< dataType > foldedData("FoldedData", true);
-	CLData< unsigned int > counterData("CounterData", true);
-	CLData< dataType > snrTable("SNRTable", true);
+	CLData< unsigned int > counterData0("CounterData0", true);
+	CLData< unsigned int > counterData1("CounterData1", true);
+	CLData< dataType > snrTable("SNRData", true);
 
 	if ( ((obs.getNrSamplesPerSecond() + (*shifts)[((obs.getNrDMs() - 1) * obs.getNrPaddedChannels())]) % obs.getPadding()) != 0 ) {
 		nrSamplesPerChannel = (obs.getNrSamplesPerSecond() + (*shifts)[((obs.getNrDMs() - 1) * obs.getNrPaddedChannels())]) + (obs.getPadding() - ((obs.getNrSamplesPerSecond() + (*shifts)[((obs.getNrDMs() - 1) * obs.getNrPaddedChannels())]) % obs.getPadding()));
@@ -148,37 +151,61 @@ int main(int argc, char * argv[]) {
 	}
 	secondsToBuffer = static_cast< unsigned int >(ceil(static_cast< float >(nrSamplesPerChannel) / obs.getNrSamplesPerPaddedSecond()));
 
-	dispersedData.allocateHostData(secondsToBuffer * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
-	snrTable.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedDMs());
-
 	try {
+		// Shifts
 		shifts->setCLContext(clContext);
 		shifts->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		shifts->allocateDeviceData();
-		shifts->copyHostToDevice(true);
+		shifts->copyHostToDevice();
+		shifts->deleteHostData();
+		// nrSamplesPerBin
+		nrSamplesPerBin->setCLContext(clContext);
+		nrSamplesPerBin->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		nrSamplesPerBin->allocateDeviceData();
+		nrSamplesPerBin->copyHostToDevice();
+		nrSamplesPerBin->deleteHostData();
+		// DispersedData
+		dispersedData.allocateHostData(secondsToBuffer * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
 		dispersedData.setCLContext(clContext);
 		dispersedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		dispersedData.allocateDeviceData();
+		// DedispersedData
 		dedispersedData.setCLContext(clContext);
 		dedispersedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		dedispersedData.allocateDeviceData(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
+		// TransposedData
 		transposedData.setCLContext(clContext);
 		transposedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		transposedData.allocateDeviceData(obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs());
+		// FoldedData
 		foldedData.setCLContext(clContext);
 		foldedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		foldedData.allocateDeviceData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
-		foldedData.blankHostData();
+		foldedData.allocateHostData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
 		foldedData.allocateDeviceData();
+		foldedData.blankHostData();
 		foldedData.copyHostToDevice();
 		foldedData.deleteHostData();
-		counterData.setCLContext(clContext);
-		counterData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		counterData.allocateDeviceData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
-		counterData.blankHostData();
-		counterData.allocateDeviceData();
-		counterData.copyHostToDevice();
-		counterData.deleteHostData();
+		// CounterData0
+		counterData0.setCLContext(clContext);
+		counterData0.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		counterData0.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedBins());
+		counterData0.blankHostData();
+		counterData0.allocateDeviceData();
+		counterData0.copyHostToDevice();
+		counterData0.deleteHostData();
+		// CounterData1
+		counterData1.setCLContext(clContext);
+		counterData1.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		counterData1.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedBins());
+		counterData1.blankHostData();
+		counterData1.allocateDeviceData();
+		counterData1.copyHostToDevice();
+		counterData1.deleteHostData();
+		// SNRData
+		snrTable.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedDMs());
+		snrTable.setCLContext(clContext);
+		snrTable.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		snrTable.allocateDeviceData();
 	} catch ( OpenCLError err ) {
 		cerr << err.what() << endl;
 		return 1;
@@ -187,8 +214,8 @@ int main(int argc, char * argv[]) {
 	if ( DEBUG ) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
-		hostMemory += shifts->getHostDataSize() + dispersedData.getHostDataSize() + snrTable.getHostDataSize();
-		deviceMemory += shifts->getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + counterData.getDeviceDataSize() + snrTable.getDeviceDataSize();
+		hostMemory += dispersedData.getHostDataSize() + snrTable.getHostDataSize();
+		deviceMemory += shifts->getDeviceDataSize() + nrSamplesPerBin->getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + (2 * counterData.getDeviceDataSize()) + snrTable.getDeviceDataSize();
 
 		cout << "Allocated host memory: " << fixed << setprecision(3) << giga(hostMemory) << endl;
 		cout << "Allocated device memory: " << fixed << setprecision(3) << giga(deviceMemory) << endl;
@@ -200,23 +227,29 @@ int main(int argc, char * argv[]) {
 	Folding< dataType > clFold("clFold", dataName);
 	SNR< dataType > clSNR("clSNR", dataName);
 	try {
+		// Dedispersion
 		clDedisperse.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
 		// TODO: tuned parameters
 		clDedisperse.setNrSamplesPerBlock();
 		clDedisperse.setNrDMsPerBlock();
 		clDedisperse.setNrSamplesPerThread();
 		clDedisperse.setNrDMsPerThread();
-		clDedisperse.setNrSamplesPerDispersedChannel(secondsToBuffer * observation.getNrSamplesPerPaddedSecond());
+		clDedisperse.setNrSamplesPerDispersedChannel(secondsToBuffer * obs.getNrSamplesPerPaddedSecond());
 		clDedisperse.setObservation(&obs);
 		clDedisperse.setShifts(shifts);
 		clDedisperse.generateCode();
+		// Transposition
 		clTranspose.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		clTranspose.setObservation(&observation);
 		// TODO: tuned parameters
 		clTranspose.setNrThreadsPerBlock();
+		clTranspose.setDimensions(obs.getNrDMs(), obs.getNrSamplesPerSecond());
+		clTranspose.setPaddingFactor(padding);
+		clTranspose.setVectorWidth(vectorWidth);
 		clTranspose.generateCode();
+		// Folding
 		clFold.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		clFold.setObservation(&observation);
+		clFold.setObservation(&obs);
+		clFold.setNrSamplesPerBin(nrSamplesPerBin);
 		// TODO: tuned parameters
 		clFold.setNrDMsPerBlock();
 		clFold.setNrPeriodsPerBlock();
@@ -225,8 +258,9 @@ int main(int argc, char * argv[]) {
 		clFold.setNrPeriodsPerThread();
 		clFold.setNrBinsPerThread();
 		clFold.generateCode();
+		// SNR
 		clSNR.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		clSNR.setObservation(&observation);
+		clSNR.setObservation(&obs);
 		// TODO: tuned parameters
 		clSNR.setNrDMsPerBlock();
 		clSNR.setNrPeriodsPerBlock();
@@ -280,11 +314,14 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Store output
+	Timer outputTime("OutputTimer");
 	try {
+		outputTime.start();
 		clSNR(&foldedData, &snrTable);
 		snrTable.copyDeviceToHost();
-		foldedData.deleteHostData();
+		outputTime.stop();
 		foldedData.deleteDeviceData();
+		foldedData.deleteHostData();
 	} catch ( OpenCLError err ) {
 		cerr << err.what() << endl;
 		return 1;
@@ -299,8 +336,8 @@ int main(int argc, char * argv[]) {
 	output.close();
 
 	if ( DEBUG ) {
-		cout << "# processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond totalTime averageTime err inputAverageTime err outputAverageTime err" << endl;
-		cout << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " searchTime.getStdDev() << " " << dispersedData.getTimer().getAverageTime() << " " << dispersedData.getTimer().getStdDev() << " " << snrTable.getTimer().getAverageTime() << " " << snrTable.getTimer().getStdDev() << endl;
+		cout << "# processedSeconds nrDMs firstDM DMStep nrPeriods firstPeriod periodStep nrBins nrSamplesPerSecond searchTime searchAverageTime err outputTime H2DTime H2DAverageTime err D2HTime dedispersionTime dedispersionAverageTime err transposeTime transposeAverageTime err foldingTime foldingAverageTime err snrTime" << endl;
+		cout << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getFirstDM() << " " << obs.getDMStep() << " " << obs.getNrPeriods() << " " << obs.getFirstPeriod() << " " << obs.getPeriodStep() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " searchTime.getStdDev() << " " << outputTime.getTotalTime() << " " << dispersedData.getTimer().getAverageTime() << " " << dispersedData.getTimer().getStdDev() << " " << snrTable.getTimer().getAverageTime() << " " << snrTable.getTimer().getStdDev() << " " << (clDedisperse.getTimer()).getTotalTime() << " " << (clDedisperse.getTimer()).getAverageTime() << " " << (clDedisperse.getTimer()).getStdDev() << " " << (clTranspose.getTimer()).getTotalTime() << " " << (clTranspose.getTimer()).getAverageTime() << " " << (clTranspose.getTimer()).getStdDev() << " " << (clFold.getTimer()).getTotalTime() << " " << (clFold.getTimer()).getAverageTime() << " " << (clFold.getTimer()).getStdDev() << " " << (clSNR.getTimer()).getTotalTime() << endl;
 	}
 
 	return 0;
