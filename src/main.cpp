@@ -135,7 +135,7 @@ int main(int argc, char * argv[]) {
 	}
 	loadTime.stop();
 	if ( DEBUG && world.rank() == 0 ) {
-		cout << "Time to load the input: " << fixed << setprecision(6) << loadTime.getTotalTime() << " s."
+		cout << "Time to load the input: " << fixed << setprecision(6) << loadTime.getTotalTime() << " s.";
 	}
 
 	// Initialize OpenCL
@@ -155,7 +155,7 @@ int main(int argc, char * argv[]) {
 	unsigned int nrSamplesPerChannel = 0;
 	unsigned int secondsToBuffer = 0;
 	CLData< unsigned int > * shifts = getShifts(obs);
-	CLData< unsigned int > * nrSamplesPerBin = getNrSamplesPerBin(obs);
+	CLData< unsigned int > nrSamplesPerBin("nrSamplesPerBin", true);
 	CLData< dataType > dispersedData("DispersedData", true);
 	CLData< dataType > dedispersedData("DedispersedData", true);
 	CLData< dataType > transposedData("TransposedData", true);
@@ -179,6 +179,7 @@ int main(int argc, char * argv[]) {
 		shifts->copyHostToDevice();
 		shifts->deleteHostData();
 		// nrSamplesPerBin
+		nrSamplesPerBin->allocateHostData(*(getNrSamplesPerBin(obs)));
 		nrSamplesPerBin->setCLContext(clContext);
 		nrSamplesPerBin->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		nrSamplesPerBin->allocateDeviceData();
@@ -235,7 +236,7 @@ int main(int argc, char * argv[]) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 		hostMemory += dispersedData.getHostDataSize() + snrTable.getHostDataSize();
-		deviceMemory += shifts->getDeviceDataSize() + nrSamplesPerBin->getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + (2 * counterData.getDeviceDataSize()) + snrTable.getDeviceDataSize();
+		deviceMemory += shifts->getDeviceDataSize() + nrSamplesPerBin->getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + (2 * counterData0.getDeviceDataSize()) + snrTable.getDeviceDataSize();
 
 		cout << "Allocated host memory: " << fixed << setprecision(3) << giga(hostMemory) << endl;
 		cout << "Allocated device memory: " << fixed << setprecision(3) << giga(deviceMemory) << endl;
@@ -300,7 +301,7 @@ int main(int argc, char * argv[]) {
 		// Prepare the input
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
 			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
-				memcpy(dispersedData.getRawHostDataAt((channel * secondsToBuffer * obs.getNrSamplesPerPaddedSecond()) + (chunk * obs.getNrSamplesPerSecond())), (input.at(second + chunk))->getRawHostDataAt(channel * obs.getNrSamplesPerPaddedSecond()), obs.getNrSamplesPerSecond() * sizeof(T));
+				memcpy(dispersedData.getRawHostDataAt((channel * secondsToBuffer * obs.getNrSamplesPerPaddedSecond()) + (chunk * obs.getNrSamplesPerSecond())), (input->at(second + chunk))->getRawHostDataAt(channel * obs.getNrSamplesPerPaddedSecond()), obs.getNrSamplesPerSecond() * sizeof(dataType));
 			}
 		}
 
@@ -320,7 +321,7 @@ int main(int argc, char * argv[]) {
 		}
 		searchTime.stop();
 	}
-	if ( DEBUG && world.rank(0) ) {
+	if ( DEBUG && world.rank() == 0 ) {
 		cout << "Search complete." << endl;
 	}
 
@@ -375,7 +376,7 @@ int main(int argc, char * argv[]) {
 	// Wait for all MPI processes
 	world.barrier();
 
-	if ( world.rank() == 0 )
+	if ( world.rank() == 0 ) {
 		cout << "# processedSeconds nrDMs firstDM DMStep nrPeriods firstPeriod periodStep nrBins nrSamplesPerSecond searchTime searchAverageTime err outputTime H2DTime H2DAverageTime err D2HTime dedispersionTime dedispersionAverageTime err transposeTime transposeAverageTime err foldingTime foldingAverageTime err snrTime" << endl;
 		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getFirstDM() << " " << obs.getDMStep() << " " << obs.getNrPeriods() << " " << obs.getFirstPeriod() << " " << obs.getPeriodStep() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " searchTime.getStdDev() << " " << outputTime.getTotalTime() << " " << dispersedData.getTimer().getAverageTime() << " " << dispersedData.getTimer().getStdDev() << " " << snrTable.getTimer().getAverageTime() << " " << snrTable.getTimer().getStdDev() << " " << (clDedisperse.getTimer()).getTotalTime() << " " << (clDedisperse.getTimer()).getAverageTime() << " " << (clDedisperse.getTimer()).getStdDev() << " " << (clTranspose.getTimer()).getTotalTime() << " " << (clTranspose.getTimer()).getAverageTime() << " " << (clTranspose.getTimer()).getStdDev() << " " << (clFold.getTimer()).getTotalTime() << " " << (clFold.getTimer()).getAverageTime() << " " << (clFold.getTimer()).getStdDev() << " " << (clSNR.getTimer()).getTotalTime() << endl;
 	}
