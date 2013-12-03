@@ -88,7 +88,7 @@ const std::map< std::string, const std::map< unsigned int, const std::map< unsig
 	}
 };
 
-const std::map< std::string, const std::map< unsigned int, const std::map< unsigned int, std::vector< const unsigned int > > > > sntParameters = {
+const std::map< std::string, const std::map< unsigned int, const std::map< unsigned int, std::vector< const unsigned int > > > > snrParameters = {
 	{"GTXTitan",
 		{2048,
 			{512, {1024, 1}}
