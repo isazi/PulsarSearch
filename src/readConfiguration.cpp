@@ -74,7 +74,6 @@ void readDedispersion(map< string, map< unsigned int, vector< unsigned int > > >
 			continue;
 		}
 		string deviceName;
-		map< unsigned int, vector< unsigned int > > container;
 		unsigned int nrDMs = 0;
 		vector< unsigned int > parameters(4);
 
@@ -95,8 +94,14 @@ void readDedispersion(map< string, map< unsigned int, vector< unsigned int > > >
 		temp = temp.substr(splitPoint + 1);
 		parameters[3] = castToType< string, unsigned int >(temp);
 
-		container.insert(make_pair(nrDMs, parameters));
-		dedispersionParameters.insert(make_pair(deviceName, container));
+		if ( dedispersionParameters.count(deviceName) == 0 ) {
+			map< unsigned int, vector< unsigned int > > container;
+
+			container.insert(make_pair(nrDMs, parameters));
+			dedispersionParameters.insert(make_pair(deviceName, container));
+		} else {
+			dedispersionParameters[deviceName].insert(make_pair(nrDMs, parameters));
+		}
 	}
 }
 
@@ -112,7 +117,6 @@ void readTranspose(map< string, map< unsigned int, unsigned int > > & transposeP
 			continue;
 		}
 		string deviceName;
-		map< unsigned int, unsigned int > container;
 		unsigned int nrDMs = 0;
 		unsigned int parameter = 0;
 
@@ -124,8 +128,14 @@ void readTranspose(map< string, map< unsigned int, unsigned int > > & transposeP
 		temp = temp.substr(splitPoint + 1);
 		parameter = castToType< string, unsigned int >(temp);
 
-		container.insert(make_pair(nrDMs, parameter));
-		transposeParameters.insert(make_pair(deviceName, container));
+		if ( transposeParameters.count(deviceName) == 0 ) {
+			map< unsigned int, unsigned int > container;
+
+			container.insert(make_pair(nrDMs, parameter));
+			transposeParameters.insert(make_pair(deviceName, container));
+		} else {
+			transposeParameters[deviceName].insert(make_pair(nrDMs, parameter));
+		}
 	}
 }
 
@@ -141,9 +151,7 @@ void readFolding(map< string, map< unsigned int, map< unsigned int, vector< unsi
 			continue;
 		}
 		string deviceName;
-		map< unsigned int, map< unsigned int, vector< unsigned int > > > externalContainer;
 		unsigned int nrDMs = 0;
-		map< unsigned int, vector< unsigned int > > internalContainer;
 		unsigned int nrPeriods = 0;
 		vector< unsigned int > parameters(6);
 
@@ -173,9 +181,19 @@ void readFolding(map< string, map< unsigned int, map< unsigned int, vector< unsi
 		temp = temp.substr(splitPoint + 1);
 		parameters[5] = castToType< string, unsigned int >(temp);
 
-		internalContainer.insert(make_pair(nrPeriods, parameters));
-		externalContainer.insert(make_pair(nrDMs, internalContainer));
-		foldingParameters.insert(make_pair(deviceName, externalContainer));
+		if ( foldingParameters.count(deviceName) == 0 ) {
+			map< unsigned int, map< unsigned int, vector< unsigned int > > > externalContainer;
+			map< unsigned int, vector< unsigned int > > internalContainer;
+
+			internalContainer.insert(make_pair(nrPeriods, parameters));
+			externalContainer.insert(make_pair(nrDMs, internalContainer));
+			foldingParameters.insert(make_pair(deviceName, externalContainer));
+		} else {
+			map< unsigned int, vector< unsigned int > > internalContainer;
+
+			internalContainer.insert(make_pair(nrPeriods, parameters));
+			foldingParameters[deviceName].insert(make_pair(nrDMs, internalContainer));
+		}
 	}
 }
 
@@ -191,9 +209,7 @@ void readSNR(map< string, map< unsigned int, map< unsigned int, vector< unsigned
 			continue;
 		}
 		string deviceName;
-		map< unsigned int, map< unsigned int, vector< unsigned int > > > externalContainer;
 		unsigned int nrDMs = 0;
-		map< unsigned int, vector< unsigned int > > internalContainer;
 		unsigned int nrPeriods = 0;
 		vector< unsigned int > parameters(2);
 
@@ -211,8 +227,18 @@ void readSNR(map< string, map< unsigned int, map< unsigned int, vector< unsigned
 		temp = temp.substr(splitPoint + 1);
 		parameters[1] = castToType< string, unsigned int >(temp);
 
-		internalContainer.insert(make_pair(nrPeriods, parameters));
-		externalContainer.insert(make_pair(nrDMs, internalContainer));
-		snrParameters.insert(make_pair(deviceName, externalContainer));
+		if ( snrParameters.count(deviceName) == 0 ) {
+			map< unsigned int, map< unsigned int, vector< unsigned int > > > externalContainer;
+			map< unsigned int, vector< unsigned int > > internalContainer;
+
+			internalContainer.insert(make_pair(nrPeriods, parameters));
+			externalContainer.insert(make_pair(nrDMs, internalContainer));
+			snrParameters.insert(make_pair(deviceName, externalContainer));
+		} else {
+			map< unsigned int, vector< unsigned int > > internalContainer;
+
+			internalContainer.insert(make_pair(nrPeriods, parameters));
+			snrParameters[deviceName].insert(make_pair(nrDMs, internalContainer));
+		}
 	}
 }
