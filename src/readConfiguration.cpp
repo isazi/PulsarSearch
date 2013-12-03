@@ -62,7 +62,7 @@ void readVectorWidth(map< string, unsigned int > & vectorWidth, const string vec
 	}
 }
 
-void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters, const string dedispersionFilename) {
+void readDedispersion(map< string, map< unsigned int, vector< unsigned int > > > & dedispersionParameters, const string dedispersionFilename) {
 	string temp;
 	ifstream dedispersionFile(dedispersionFilename);
 
@@ -74,6 +74,7 @@ void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector
 			continue;
 		}
 		string deviceName;
+		map< unsigned int, vector< unsigned int > > container;
 		unsigned int nrDMs = 0;
 		vector< unsigned int > parameters(4);
 
@@ -94,7 +95,8 @@ void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector
 		temp = temp.substr(splitPoint + 1);
 		parameters[3] = castToType< string, unsigned int >(temp);
 
-		dedispersionParameters.insert(make_pair(deviceName, make_pair(nrDMs, parameters)));
+		container.insert(make_pair(nrDMs, parameters));
+		dedispersionParameters.insert(make_pair(deviceName, container));
 	}
 }
 
@@ -110,6 +112,7 @@ void readTranspose(map< string, map< unsigned int, unsigned int > > transposePar
 			continue;
 		}
 		string deviceName;
+		map< unsigned int, unsigned int > container;
 		unsigned int nrDMs = 0;
 		unsigned int parameter = 0;
 
@@ -121,11 +124,12 @@ void readTranspose(map< string, map< unsigned int, unsigned int > > transposePar
 		temp = temp.substr(splitPoint + 1);
 		parameter = castToType< string, unsigned int >(temp);
 
-		transposeParameters.insert(make_pair(deviceName, make_pair(nrDMs, parameter)));
+		container.insert(make_pair(nrDMs, parameter));
+		transposeParameters.insert(make_pair(deviceName, container));
 	}
 }
 
-void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const string foldingFilename) {
+void readFolding(map< string, map< unsigned int, map< unsigned int, vector< unsigned int > > > > & foldingParameters, const string foldingFilename) {
 	string temp;
 	ifstream foldingFile(foldingFilename);
 
@@ -137,7 +141,9 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 			continue;
 		}
 		string deviceName;
+		map< unsigned int, map< unsigned int, vector< unsigned int > > > externalContainer;
 		unsigned int nrDMs = 0;
+		map< unsigned int, vector< unsigned int > > internalContainer;
 		unsigned int nrPeriods = 0;
 		vector< unsigned int > parameters(6);
 
@@ -167,11 +173,13 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 		temp = temp.substr(splitPoint + 1);
 		parameters[5] = castToType< string, unsigned int >(temp);
 
-		foldingParameters.insert(make_pair(deviceName, make_pair(nrDMs, make_pair(nrPeriods, parameters))));
+		internalContainer.insert(make_pair(nrPeriods, parameters));
+		externalContainer.insert(make_pair(nrDMs, internalContainer));
+		foldingParameters.insert(make_pair(deviceName, externalContainer));
 	}
 }
 
-void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const string snrFilename) {
+void readSNR(map< string, map< unsigned int, map< unsigned int, vector< unsigned int > > > > & snrParameters, const string snrFilename) {
 	string temp;
 	ifstream snrFile(snrFilename);
 
@@ -183,7 +191,9 @@ void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned i
 			continue;
 		}
 		string deviceName;
+		map< unsigned int, map< unsigned int, vector< unsigned int > > > externalContainer;
 		unsigned int nrDMs = 0;
+		map< unsigned int, vector< unsigned int > > internalContainer;
 		unsigned int nrPeriods = 0;
 		vector< unsigned int > parameters(2);
 
@@ -201,6 +211,8 @@ void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned i
 		temp = temp.substr(splitPoint + 1);
 		parameters[1] = castToType< string, unsigned int >(temp);
 
-		snrParameters.insert(make_pair(deviceName, make_pair(nrDMs, make_pair(nrPeriods, parameters))));
+		internalContainer.insert(make_pair(nrPeriods, parameters));
+		externalContainer.insert(make_pair(nrDMs, internalContainer));
+		snrParameters.insert(make_pair(deviceName, externalContainer));
 	}
 }
