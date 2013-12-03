@@ -30,7 +30,7 @@ using std::vector;
 using isa::utils::castToType;
 
 
-void readPadding(map< string, unsigned int > & padding) {
+void readPadding(map< string, unsigned int > & padding, const string paddingFilename) {
 	string temp;
 	ifstream paddingFile(paddingFilename);
 
@@ -46,7 +46,7 @@ void readPadding(map< string, unsigned int > & padding) {
 	}
 }
 
-void readVectorWidth(map< string, unsigned int > & vectorWidth) {
+void readVectorWidth(map< string, unsigned int > & vectorWidth, const string vectorFilename) {
 	string temp;
 	ifstream vectorFile(vectorFilename);
 
@@ -62,7 +62,7 @@ void readVectorWidth(map< string, unsigned int > & vectorWidth) {
 	}
 }
 
-void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters) {
+void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters, const string dedispersionFilename) {
 	string temp;
 	ifstream dedispersionFile(dedispersionFilename);
 
@@ -98,7 +98,7 @@ void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector
 	}
 }
 
-void readTranspose(map< string, map< unsigned int, unsigned int > > transposeParameters) {
+void readTranspose(map< string, map< unsigned int, unsigned int > > transposeParameters, const string transposeFilename) {
 	string temp;
 	ifstream transposeFile(transposeFilename);
 
@@ -125,7 +125,7 @@ void readTranspose(map< string, map< unsigned int, unsigned int > > transposePar
 	}
 }
 
-void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters) {
+void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const string foldingFilename) {
 	string temp;
 	ifstream foldingFile(foldingFilename);
 
@@ -171,7 +171,7 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 	}
 }
 
-void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const string snrFilename) {
+void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const string snrFilename, const string snrFilename) {
 	string temp;
 	ifstream snrFile(snrFilename);
 
