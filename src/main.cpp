@@ -31,6 +31,11 @@ using std::ofstream;
 using std::vector;
 #include <iomanip>
 using std::setprecision;
+#include <boost/mpi.hpp>
+using boost::mpi::environment;
+using boost::mpi::communicator;
+#include <map>
+using std::map;
 
 #include <configuration.hpp>
 
@@ -38,6 +43,7 @@ using std::setprecision;
 using isa::utils::ArgumentList;
 #include <utils.hpp>
 using isa::utils::giga;
+using isa::utils::toStringValue;
 #include <Observation.hpp>
 using AstroData::Observation;
 #include <ReadData.hpp>
@@ -70,17 +76,25 @@ int main(int argc, char * argv[]) {
 	bool dataSIGPROC = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
+	string deviceName;
 	string dataFile;
 	string headerFile;
 	string outputFile;
 	// Observation object
 	Observation< dataType > obs("PulsarSearch", dataName);
 
+	// Initialize MPI
+	environment envMPI(argc, argv);
+	communicator world;
+
 	try {
 		ArgumentList args(argc, argv);
 
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
+		deviceName = args.getSwitchArgument< unsigned int >("-device_name");
+
+		obs.setPadding(padding[deviceName]);
 
 		dataLOFAR = args.getSwitch("-lofar");
 		dataSIGPROC = args.getSwitch("-sigproc");
@@ -98,11 +112,11 @@ int main(int argc, char * argv[]) {
 		}
 		outputFile = args.getSwitchArgument< string >("-output");
 
+		obs.setNrDMs(args.getSwitchArgument< unsigned int >("-dm_number"));
 		obs.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		obs.setDMStep(args.getSwitchArgument< float >("-dm_step"));
-		obs.setNrDMs(args.getSwitchArgument< unsigned int >("-dm_number"));
-		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first"));
 		obs.setNrPeriods(args.getSwitchArgument< unsigned int >("-period_number"));
+		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first") + (world.rank() * obs.getNrPeriods()));
 		obs.setPeriodStep(args.getSwitchArgument< unsigned int >("-period_step"));
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( exception &err ) {
@@ -111,11 +125,17 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Load observation data
+	Timer loadTime("LoadInputTimer");
 	vector< CLData< dataType > * > * input = new vector< CLData< dataType > * >(1);
+	loadTime.start();
 	if ( dataLOFAR ) {
 		readLOFAR(headerFile, dataFile, obs, *input);
 	} else if ( dataSIGPROC ) {
 		// TODO: implement SIGPROC pipeline
+	}
+	loadTime.stop();
+	if ( DEBUG && world.rank() == 0 ) {
+		cout << "Time to load the input: " << fixed << setprecision(6) << loadTime.getTotalTime() << " s."
 	}
 
 	// Initialize OpenCL
@@ -211,7 +231,7 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	if ( DEBUG ) {
+	if ( DEBUG && world.rank() == 0 ) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 		hostMemory += dispersedData.getHostDataSize() + snrTable.getHostDataSize();
@@ -229,41 +249,37 @@ int main(int argc, char * argv[]) {
 	try {
 		// Dedispersion
 		clDedisperse.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		// TODO: tuned parameters
-		clDedisperse.setNrSamplesPerBlock();
-		clDedisperse.setNrDMsPerBlock();
-		clDedisperse.setNrSamplesPerThread();
-		clDedisperse.setNrDMsPerThread();
+		clDedisperse.setNrSamplesPerBlock(dedispersionParameters[deviceName][obs.getNrDMs()][0]);
+		clDedisperse.setNrDMsPerBlock(dedispersionParameters[deviceName][obs.getNrDMs()][1]);
+		clDedisperse.setNrSamplesPerThread(dedispersionParameters[deviceName][obs.getNrDMs()][2]);
+		clDedisperse.setNrDMsPerThread(dedispersionParameters[deviceName][obs.getNrDMs()][3]);
 		clDedisperse.setNrSamplesPerDispersedChannel(secondsToBuffer * obs.getNrSamplesPerPaddedSecond());
 		clDedisperse.setObservation(&obs);
 		clDedisperse.setShifts(shifts);
 		clDedisperse.generateCode();
 		// Transposition
 		clTranspose.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		// TODO: tuned parameters
-		clTranspose.setNrThreadsPerBlock();
+		clTranspose.setNrThreadsPerBlock(transposeParameters[deviceName][obs.getNrDMs()]);
 		clTranspose.setDimensions(obs.getNrDMs(), obs.getNrSamplesPerSecond());
-		clTranspose.setPaddingFactor(padding);
-		clTranspose.setVectorWidth(vectorWidth);
+		clTranspose.setPaddingFactor(padding[deviceName]);
+		clTranspose.setVectorWidth(vectorWidth[deviceName]);
 		clTranspose.generateCode();
 		// Folding
 		clFold.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
 		clFold.setObservation(&obs);
 		clFold.setNrSamplesPerBin(nrSamplesPerBin);
-		// TODO: tuned parameters
-		clFold.setNrDMsPerBlock();
-		clFold.setNrPeriodsPerBlock();
-		clFold.setNrBinsPerBlock();
-		clFold.setNrDMsPerThread();
-		clFold.setNrPeriodsPerThread();
-		clFold.setNrBinsPerThread();
+		clFold.setNrDMsPerBlock(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0]);
+		clFold.setNrPeriodsPerBlock(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
+		clFold.setNrBinsPerBlock(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
+		clFold.setNrDMsPerThread(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3]);
+		clFold.setNrPeriodsPerThread(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4]);
+		clFold.setNrBinsPerThread(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5]);
 		clFold.generateCode();
 		// SNR
 		clSNR.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
 		clSNR.setObservation(&obs);
-		// TODO: tuned parameters
-		clSNR.setNrDMsPerBlock();
-		clSNR.setNrPeriodsPerBlock();
+		clSNR.setNrDMsPerBlock(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0]);
+		clSNR.setNrPeriodsPerBlock(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
 		clSNR.setPulsarPipeline();
 		clSNR.generateCode();
 	} catch ( OpenCLError err ) {
@@ -273,8 +289,11 @@ int main(int argc, char * argv[]) {
 
 	// Search loop
 	Timer searchTime("SearchTimer");
+	if ( DEBUG && world.rank() == 0 ) {
+		cout << "Starting the search." << endl;
+	}
 	for ( unsigned int second = 0; second <= obs.getNrSeconds() - secondsToBuffer; second++ ) {
-		if ( DEBUG ) {
+		if ( DEBUG && world.rank() == 0 ) {
 			cout << "Processing second " << second << endl;
 		}
 		searchTime.start();
@@ -290,12 +309,19 @@ int main(int argc, char * argv[]) {
 			dispersedData.copyHostToDevice();
 			clDedisperse(&dispersedData, &dedispersedData);
 			clTranspose(&dedispersedData, &transposedData);
-			clFold(&transposedData, &foldedData, &counterData);
+			if ( second % 2 == 0 ) {
+				clFold(second, &transposedData, &foldedData, &counterData0, &counterData1);
+			} else {
+				clFold(second, &transposedData, &foldedData, &counterData1, &counterData0);
+			}
 		} catch ( OpenCLError err ) {
 			cerr << err.what() << endl;
 			return 1;
 		}
 		searchTime.stop();
+	}
+	if ( DEBUG && world.rank(0) ) {
+		cout << "Search complete." << endl;
 	}
 
 	// Release unnecessary memory
@@ -304,17 +330,18 @@ int main(int argc, char * argv[]) {
 		dispersedData.deleteDeviceData();
 		dispersedData.deleteHostData();
 		dedispersedData.deleteDeviceData();
-		dedispersedData.deleteHostData();
 		transposedData.deleteDeviceData();
-		transposedData.deleteHostData();
-		counterData.deleteDeviceData();
-		counterData.deleteHostData();
+		counterData0.deleteDeviceData();
+		counterData1.deleteDeviceData();
 	} catch ( OpenCLError err ) {
 		cerr << err.what() << endl;
 	}
 
 	// Store output
 	Timer outputTime("OutputTimer");
+	if ( DEBUG && world.rank() == 0 ) {
+		cout << "Analyzing processed data." << endl;
+	}
 	try {
 		outputTime.start();
 		clSNR(&foldedData, &snrTable);
@@ -326,8 +353,11 @@ int main(int argc, char * argv[]) {
 		cerr << err.what() << endl;
 		return 1;
 	}
+	if ( DEBUG && world.rank() == 0 ) {
+		cout << "Saving output to disk." << endl;
+	}
 	ofstream output;
-	output.open(outputFile);
+	output.open(toStringValue< unsigned int >(world.rank()) + "_" + outputFile);
 	for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
 		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
 			output << period << " " << dm << " " << fixed << setprecision(3) << snrTable[(period * obs.getNrPaddedDMs()) + dm] << endl;
@@ -335,9 +365,19 @@ int main(int argc, char * argv[]) {
 	}
 	output.close();
 
-	if ( DEBUG ) {
+	try {
+		snrTable.deleteDeviceData();
+		snrTable.deleteHostData();
+	} catch ( OpenCLError err ) {
+		cerr << err.what() << endl;
+	}
+
+	// Wait for all MPI processes
+	world.barrier();
+
+	if ( world.rank() == 0 )
 		cout << "# processedSeconds nrDMs firstDM DMStep nrPeriods firstPeriod periodStep nrBins nrSamplesPerSecond searchTime searchAverageTime err outputTime H2DTime H2DAverageTime err D2HTime dedispersionTime dedispersionAverageTime err transposeTime transposeAverageTime err foldingTime foldingAverageTime err snrTime" << endl;
-		cout << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getFirstDM() << " " << obs.getDMStep() << " " << obs.getNrPeriods() << " " << obs.getFirstPeriod() << " " << obs.getPeriodStep() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " searchTime.getStdDev() << " " << outputTime.getTotalTime() << " " << dispersedData.getTimer().getAverageTime() << " " << dispersedData.getTimer().getStdDev() << " " << snrTable.getTimer().getAverageTime() << " " << snrTable.getTimer().getStdDev() << " " << (clDedisperse.getTimer()).getTotalTime() << " " << (clDedisperse.getTimer()).getAverageTime() << " " << (clDedisperse.getTimer()).getStdDev() << " " << (clTranspose.getTimer()).getTotalTime() << " " << (clTranspose.getTimer()).getAverageTime() << " " << (clTranspose.getTimer()).getStdDev() << " " << (clFold.getTimer()).getTotalTime() << " " << (clFold.getTimer()).getAverageTime() << " " << (clFold.getTimer()).getStdDev() << " " << (clSNR.getTimer()).getTotalTime() << endl;
+		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getFirstDM() << " " << obs.getDMStep() << " " << obs.getNrPeriods() << " " << obs.getFirstPeriod() << " " << obs.getPeriodStep() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " searchTime.getStdDev() << " " << outputTime.getTotalTime() << " " << dispersedData.getTimer().getAverageTime() << " " << dispersedData.getTimer().getStdDev() << " " << snrTable.getTimer().getAverageTime() << " " << snrTable.getTimer().getStdDev() << " " << (clDedisperse.getTimer()).getTotalTime() << " " << (clDedisperse.getTimer()).getAverageTime() << " " << (clDedisperse.getTimer()).getStdDev() << " " << (clTranspose.getTimer()).getTotalTime() << " " << (clTranspose.getTimer()).getAverageTime() << " " << (clTranspose.getTimer()).getStdDev() << " " << (clFold.getTimer()).getTotalTime() << " " << (clFold.getTimer()).getAverageTime() << " " << (clFold.getTimer()).getStdDev() << " " << (clSNR.getTimer()).getTotalTime() << endl;
 	}
 
 	return 0;
