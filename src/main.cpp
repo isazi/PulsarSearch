@@ -38,6 +38,7 @@ using boost::mpi::communicator;
 using std::map;
 
 #include <configuration.hpp>
+#include <readConfiguration.hpp>
 
 #include <ArgumentList.hpp>
 using isa::utils::ArgumentList;
@@ -93,6 +94,13 @@ int main(int argc, char * argv[]) {
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
 		deviceName = args.getSwitchArgument< unsigned int >("-device_name");
+
+		readPadding(padding, args.getSwitchArgument< string >("-padding_file"));
+		readVectorWidth(vectorWidth, args.getSwitchArgument< string >("-vector_file"));
+		readDedispersion(dedispersionParameters, args.getSwitchArgument< string >("-dedispersion_file"));
+		readTranspose(transposeParameters, args.getSwitchArgument< string >("-transpose_file"));
+		readFolding(foldingParameters, args.getSwitchArgument< string >("-folding_file"));
+		readSNR(snrParameters, args.getSwitchArgument< string >("-snr_file"));
 
 		obs.setPadding(padding[deviceName]);
 
