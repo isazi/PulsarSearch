@@ -100,7 +100,7 @@ void readDedispersion(map< string, map< unsigned int, vector< unsigned int > > >
 	}
 }
 
-void readTranspose(map< string, map< unsigned int, unsigned int > > transposeParameters, const string transposeFilename) {
+void readTranspose(map< string, map< unsigned int, unsigned int > > & transposeParameters, const string transposeFilename) {
 	string temp;
 	ifstream transposeFile(transposeFilename);
 
