@@ -171,7 +171,7 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 	}
 }
 
-void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const string snrFilename, const string snrFilename) {
+void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const string snrFilename) {
 	string temp;
 	ifstream snrFile(snrFilename);
 
