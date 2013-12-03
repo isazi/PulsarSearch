@@ -179,12 +179,12 @@ int main(int argc, char * argv[]) {
 		shifts->copyHostToDevice();
 		shifts->deleteHostData();
 		// nrSamplesPerBin
-		nrSamplesPerBin->allocateHostData(*(getNrSamplesPerBin(obs)));
-		nrSamplesPerBin->setCLContext(clContext);
-		nrSamplesPerBin->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		nrSamplesPerBin->allocateDeviceData();
-		nrSamplesPerBin->copyHostToDevice();
-		nrSamplesPerBin->deleteHostData();
+		nrSamplesPerBin.allocateHostData(*(getNrSamplesPerBin(obs)));
+		nrSamplesPerBin.setCLContext(clContext);
+		nrSamplesPerBin.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		nrSamplesPerBin.allocateDeviceData();
+		nrSamplesPerBin.copyHostToDevice();
+		nrSamplesPerBin.deleteHostData();
 		// DispersedData
 		dispersedData.allocateHostData(secondsToBuffer * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
 		dispersedData.setCLContext(clContext);
@@ -236,7 +236,7 @@ int main(int argc, char * argv[]) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 		hostMemory += dispersedData.getHostDataSize() + snrTable.getHostDataSize();
-		deviceMemory += shifts->getDeviceDataSize() + nrSamplesPerBin->getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + (2 * counterData0.getDeviceDataSize()) + snrTable.getDeviceDataSize();
+		deviceMemory += shifts->getDeviceDataSize() + nrSamplesPerBin.getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + (2 * counterData0.getDeviceDataSize()) + snrTable.getDeviceDataSize();
 
 		cout << "Allocated host memory: " << fixed << setprecision(3) << giga(hostMemory) << endl;
 		cout << "Allocated device memory: " << fixed << setprecision(3) << giga(deviceMemory) << endl;
