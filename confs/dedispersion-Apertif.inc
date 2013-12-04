@@ -1,0 +1,5 @@
+# device DMs parameters
+GTXTitan 2048 32 16 25 4
+HD7970 2048 32 8 5 4
+K20 2048 32 16 25 4
+Phi 2048 16 1 10 4
