@@ -93,7 +93,7 @@ int main(int argc, char * argv[]) {
 
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
-		deviceName = args.getSwitchArgument< unsigned int >("-device_name");
+		deviceName = args.getSwitchArgument< string >("-device_name");
 
 		readPadding(padding, args.getSwitchArgument< string >("-padding_file"));
 		readVectorWidth(vectorWidth, args.getSwitchArgument< string >("-vector_file"));
