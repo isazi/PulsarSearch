@@ -185,7 +185,6 @@ int main(int argc, char * argv[]) {
 		shifts->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		shifts->allocateDeviceData();
 		shifts->copyHostToDevice();
-		shifts->deleteHostData();
 		// nrSamplesPerBin
 		nrSamplesPerBin.allocateHostData(*(getNrSamplesPerBin(obs)));
 		nrSamplesPerBin.setCLContext(clContext);
@@ -266,6 +265,7 @@ int main(int argc, char * argv[]) {
 		clDedisperse.setObservation(&obs);
 		clDedisperse.setShifts(shifts);
 		clDedisperse.generateCode();
+		shifts->deleteHostData();
 		// Transposition
 		clTranspose.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
 		clTranspose.setNrThreadsPerBlock(transposeParameters[deviceName][obs.getNrDMs()]);
