@@ -143,7 +143,7 @@ int main(int argc, char * argv[]) {
 	}
 	loadTime.stop();
 	if ( DEBUG && world.rank() == 0 ) {
-		cout << "Time to load the input: " << fixed << setprecision(6) << loadTime.getTotalTime() << " s.";
+		cout << "Time to load the input: " << fixed << setprecision(6) << loadTime.getTotalTime() << " seconds." << endl;
 	}
 
 	// Initialize OpenCL
@@ -246,8 +246,8 @@ int main(int argc, char * argv[]) {
 		hostMemory += dispersedData.getHostDataSize() + snrTable.getHostDataSize();
 		deviceMemory += shifts->getDeviceDataSize() + nrSamplesPerBin.getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + (2 * counterData0.getDeviceDataSize()) + snrTable.getDeviceDataSize();
 
-		cout << "Allocated host memory: " << fixed << setprecision(3) << giga(hostMemory) << endl;
-		cout << "Allocated device memory: " << fixed << setprecision(3) << giga(deviceMemory) << endl;
+		cout << "Allocated host memory: " << fixed << setprecision(3) << giga(hostMemory) << " GB." << endl;
+		cout << "Allocated device memory: " << fixed << setprecision(3) << giga(deviceMemory) << "GB." << endl;
 	}
 
 	// Generate OpenCL kernels
