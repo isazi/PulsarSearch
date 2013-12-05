@@ -77,6 +77,7 @@ int main(int argc, char * argv[]) {
 	bool dataSIGPROC = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
+	unsigned int bytesToSkip = 0;
 	string deviceName;
 	string dataFile;
 	string headerFile;
@@ -113,7 +114,14 @@ int main(int argc, char * argv[]) {
 			headerFile = args.getSwitchArgument< string >("-header");
 			dataFile = args.getSwitchArgument< string >("-data");
 		} else if ( dataSIGPROC ) {
+			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
 			dataFile = args.getSwitchArgument< string >("-data");
+			obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
+			obs.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
+			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+			obs.setMinFreq(args.getSwitchArgument< unsigned int >("-low_freq"));
+			obs.setChannelBandwidth(args.getSwitchArgument< unsigned int >("-channel_band"));
+			obs.setMaxFreq(obs.getMinFreq() + ((obs.getNrChannels() - 1) * obs.getChannelBandwidth()));
 		} else {
 			cerr << "Need to specify the -header and -data arguments." << endl;
 			throw exception();
@@ -139,7 +147,7 @@ int main(int argc, char * argv[]) {
 	if ( dataLOFAR ) {
 		readLOFAR(headerFile, dataFile, obs, *input);
 	} else if ( dataSIGPROC ) {
-		// TODO: implement SIGPROC pipeline
+		readSIGPROC(obs, bytesToSkip, dataFile, *input);
 	}
 	loadTime.stop();
 	if ( DEBUG && world.rank() == 0 ) {
