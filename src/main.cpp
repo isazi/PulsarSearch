@@ -298,6 +298,7 @@ int main(int argc, char * argv[]) {
 
 	// Search loop
 	Timer searchTime("SearchTimer");
+	Timer inputPreTime("InputPreProcessingTimer");
 	if ( DEBUG && world.rank() == 0 ) {
 		cout << "Starting the search." << endl;
 	}
@@ -307,11 +308,13 @@ int main(int argc, char * argv[]) {
 		}
 		searchTime.start();
 		// Prepare the input
+		inputPreTime.start();
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
 			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
 				memcpy(dispersedData.getRawHostDataAt((channel * secondsToBuffer * obs.getNrSamplesPerPaddedSecond()) + (chunk * obs.getNrSamplesPerSecond())), (input->at(second + chunk))->getRawHostDataAt(channel * obs.getNrSamplesPerPaddedSecond()), obs.getNrSamplesPerSecond() * sizeof(dataType));
 			}
 		}
+		inputPreTime.stop();
 
 		// Run the kernels
 		try {
@@ -334,7 +337,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Release unnecessary memory
-	delete [] input;
+	delete input;
 	try {
 		dispersedData.deleteDeviceData();
 		dispersedData.deleteHostData();
@@ -366,7 +369,7 @@ int main(int argc, char * argv[]) {
 		cout << "Saving output to disk." << endl;
 	}
 	ofstream output;
-	output.open(toStringValue< unsigned int >(world.rank()) + "_" + outputFile);
+	output.open(outputFile + "_" + toStringValue< unsigned int >(world.rank()));
 	for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
 		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
 			output << obs.getFirstPeriod() + (period * obs.getPeriodStep()) << " " << obs.getFirstDM() + (dm * obs.getDMStep()) << " " << fixed << setprecision(3) << snrTable[(period * obs.getNrPaddedDMs()) + dm] << endl;
@@ -385,8 +388,8 @@ int main(int argc, char * argv[]) {
 	world.barrier();
 
 	if ( world.rank() == 0 ) {
-		cout << "# processedSeconds nrDMs firstDM DMStep nrPeriods firstPeriod periodStep nrBins nrSamplesPerSecond searchTime searchAverageTime err outputTime H2DTime H2DAverageTime err D2HTime dedispersionTime dedispersionAverageTime err transposeTime transposeAverageTime err foldingTime foldingAverageTime err snrTime" << endl;
-		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getFirstDM() << " " << obs.getDMStep() << " " << obs.getNrPeriods() << " " << obs.getFirstPeriod() << " " << obs.getPeriodStep() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " << searchTime.getStdDev() << " " << outputTime.getTotalTime() << " " << dispersedData.getH2DTimer().getAverageTime() << " " << dispersedData.getH2DTimer().getStdDev() << " " << snrTable.getD2HTimer().getAverageTime() << " " << snrTable.getD2HTimer().getStdDev() << " " << clDedisperse.getTimer().getTotalTime() << " " << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << " " << clTranspose.getTimer().getTotalTime() << " " << clTranspose.getTimer().getAverageTime() << " " << clTranspose.getTimer().getStdDev() << " " << clFold.getTimer().getTotalTime() << " " << clFold.getTimer().getAverageTime() << " " << clFold.getTimer().getStdDev() << " " << clSNR.getTimer().getTotalTime() << endl;
+		cout << "# processedSeconds nrDMs firstDM DMStep nrPeriods firstPeriod periodStep nrBins nrSamplesPerSecond searchTime searchAverageTime err inputPreProcessingTime inputPreProcessingAverageTime err outputTime H2DTime H2DAverageTime err D2HTime dedispersionTime dedispersionAverageTime err transposeTime transposeAverageTime err foldingTime foldingAverageTime err snrTime" << endl;
+		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getFirstDM() << " " << obs.getDMStep() << " " << obs.getNrPeriods() << " " << obs.getFirstPeriod() << " " << obs.getPeriodStep() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " << searchTime.getStdDev() << " " << inputPreTime.getTotalTime() << " " << inputPreTime.getAverageTime() << " " << inputPreTime.getStdDev() << " " << outputTime.getTotalTime() << " " << dispersedData.getH2DTimer().getAverageTime() << " " << dispersedData.getH2DTimer().getStdDev() << " " << snrTable.getD2HTimer().getAverageTime() << " " << snrTable.getD2HTimer().getStdDev() << " " << clDedisperse.getTimer().getTotalTime() << " " << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << " " << clTranspose.getTimer().getTotalTime() << " " << clTranspose.getTimer().getAverageTime() << " " << clTranspose.getTimer().getStdDev() << " " << clFold.getTimer().getTotalTime() << " " << clFold.getTimer().getAverageTime() << " " << clFold.getTimer().getStdDev() << " " << clSNR.getTimer().getTotalTime() << endl;
 	}
 
 	return 0;
