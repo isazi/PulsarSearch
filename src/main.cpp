@@ -132,8 +132,8 @@ int main(int argc, char * argv[]) {
 		obs.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		obs.setDMStep(args.getSwitchArgument< float >("-dm_step"));
 		obs.setNrPeriods(args.getSwitchArgument< unsigned int >("-period_number"));
-		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first") + (world.rank() * obs.getNrPeriods()));
 		obs.setPeriodStep(args.getSwitchArgument< unsigned int >("-period_step"));
+		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first") + (world.rank() * (obs.getPeriodStep() * obs.getNrPeriods())));
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( exception &err ) {
 		cerr << err.what() << endl;
