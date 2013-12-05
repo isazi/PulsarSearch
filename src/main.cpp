@@ -301,10 +301,11 @@ int main(int argc, char * argv[]) {
 	Timer inputPreTime("InputPreProcessingTimer");
 	if ( DEBUG && world.rank() == 0 ) {
 		cout << "Starting the search." << endl;
+		cout << "Processing seconds: ";
 	}
 	for ( unsigned int second = 0; second <= obs.getNrSeconds() - secondsToBuffer; second++ ) {
 		if ( DEBUG && world.rank() == 0 ) {
-			cout << "Processing second " << second << endl;
+			cout << second << " ";
 		}
 		searchTime.start();
 		// Prepare the input
@@ -333,6 +334,7 @@ int main(int argc, char * argv[]) {
 		searchTime.stop();
 	}
 	if ( DEBUG && world.rank() == 0 ) {
+		cout << "." << endl;
 		cout << "Search complete." << endl;
 	}
 
