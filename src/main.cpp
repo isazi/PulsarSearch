@@ -119,8 +119,8 @@ int main(int argc, char * argv[]) {
 			obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
 			obs.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
 			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
-			obs.setMinFreq(args.getSwitchArgument< unsigned int >("-low_freq"));
-			obs.setChannelBandwidth(args.getSwitchArgument< unsigned int >("-channel_band"));
+			obs.setMinFreq(args.getSwitchArgument< float >("-low_freq"));
+			obs.setChannelBandwidth(args.getSwitchArgument< float >("-channel_band"));
 			obs.setMaxFreq(obs.getMinFreq() + ((obs.getNrChannels() - 1) * obs.getChannelBandwidth()));
 		} else {
 			cerr << "Need to specify the -header and -data arguments." << endl;
