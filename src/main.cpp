@@ -147,6 +147,7 @@ int main(int argc, char * argv[]) {
 	if ( dataLOFAR ) {
 		readLOFAR(headerFile, dataFile, obs, *input);
 	} else if ( dataSIGPROC ) {
+		input->resize(obs.getNrSeconds());
 		readSIGPROC(obs, bytesToSkip, dataFile, *input);
 	}
 	loadTime.stop();
