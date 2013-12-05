@@ -369,7 +369,7 @@ int main(int argc, char * argv[]) {
 	output.open(toStringValue< unsigned int >(world.rank()) + "_" + outputFile);
 	for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
 		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-			output << period << " " << dm << " " << fixed << setprecision(3) << snrTable[(period * obs.getNrPaddedDMs()) + dm] << endl;
+			output << obs.getFirstPeriod() + (period * obs.getPeriodStep()) << " " << obs.getFirstDM() + (dm * obs.getDMStep()) << " " << fixed << setprecision(3) << snrTable[(period * obs.getNrPaddedDMs()) + dm] << endl;
 		}
 	}
 	output.close();
