@@ -21,6 +21,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::fixed;
+using std::flush;
 #include <string>
 using std::string;
 #include <exception>
@@ -198,6 +199,7 @@ int main(int argc, char * argv[]) {
 		nrSamplesPerBin.allocateHostData(*(getNrSamplesPerBin(obs)));
 		nrSamplesPerBin.setCLContext(clContext);
 		nrSamplesPerBin.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		nrSamplesPerBin.setDeviceReadOnly();
 		nrSamplesPerBin.allocateDeviceData();
 		nrSamplesPerBin.copyHostToDevice();
 		nrSamplesPerBin.deleteHostData();
@@ -205,6 +207,7 @@ int main(int argc, char * argv[]) {
 		dispersedData.allocateHostData(secondsToBuffer * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
 		dispersedData.setCLContext(clContext);
 		dispersedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		dispersedData.setDeviceReadOnly();
 		dispersedData.allocateDeviceData();
 		// DedispersedData
 		dedispersedData.setCLContext(clContext);
@@ -242,6 +245,7 @@ int main(int argc, char * argv[]) {
 		snrTable.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedDMs());
 		snrTable.setCLContext(clContext);
 		snrTable.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		snrTable.setDeviceWriteOnly();
 		snrTable.allocateDeviceData();
 	} catch ( OpenCLError err ) {
 		cerr << err.what() << endl;
@@ -314,7 +318,7 @@ int main(int argc, char * argv[]) {
 	}
 	for ( unsigned int second = 0; second <= obs.getNrSeconds() - secondsToBuffer; second++ ) {
 		if ( DEBUG && world.rank() == 0 ) {
-			cout << second << " ";
+			cout << second << " " << flush;
 		}
 		searchTime.start();
 		// Prepare the input
