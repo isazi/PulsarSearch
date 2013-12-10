@@ -134,7 +134,7 @@ int main(int argc, char * argv[]) {
 	vector< CLData< dataType > * > * input = new vector< CLData< dataType > * >(obs.getNrSeconds());
 	for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
 		input->at(second) = new CLData< dataType >("Test", true);
-		intput->at(second)->allocateHostData(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
+		input->at(second)->allocateHostData(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
 
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
 			for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
