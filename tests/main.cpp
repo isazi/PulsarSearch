@@ -134,6 +134,7 @@ int main(int argc, char * argv[]) {
 	vector< CLData< dataType > * > * input = new vector< CLData< dataType > * >(obs.getNrSeconds());
 	for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
 		input->at(second) = new CLData< dataType >("Test", true);
+		intput->at(second)->allocateHostData(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
 
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
 			for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
@@ -189,6 +190,7 @@ int main(int argc, char * argv[]) {
 		nrSamplesPerBin.allocateHostData(*(getNrSamplesPerBin(obs)));
 		nrSamplesPerBin.setCLContext(clContext);
 		nrSamplesPerBin.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		nrSamplesPerBin.setDeviceReadOnly();
 		nrSamplesPerBin.allocateDeviceData();
 		nrSamplesPerBin.copyHostToDevice();
 		nrSamplesPerBin.deleteHostData();
@@ -196,6 +198,7 @@ int main(int argc, char * argv[]) {
 		dispersedData.allocateHostData(secondsToBuffer * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
 		dispersedData.setCLContext(clContext);
 		dispersedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		dispersedData.setDeviceReadOnly();
 		dispersedData.allocateDeviceData();
 		// DedispersedData
 		dedispersedData.setCLContext(clContext);
@@ -233,6 +236,7 @@ int main(int argc, char * argv[]) {
 		snrTable.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedDMs());
 		snrTable.setCLContext(clContext);
 		snrTable.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		snrTable.setDeviceWriteOnly();
 		snrTable.allocateDeviceData();
 	} catch ( OpenCLError err ) {
 		cerr << err.what() << endl;
