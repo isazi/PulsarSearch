@@ -387,7 +387,7 @@ int main(int argc, char * argv[]) {
 	output.open(outputFile + "_" + toStringValue< unsigned int >(world.rank()));
 	for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
 		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-			output << obs.getFirstPeriod() + (period * obs.getPeriodStep()) << " " << fixed << setprecision(6) << (obs.getFirstPeriod() + (period * obs.getPeriodStep())) / static_cast< float > (obs.getNrSamplesPerSecond()) << " " << dm << " " << setprecision(3) << obs.getFirstDM() + (dm * obs.getDMStep()) << " " << snrTable[(period * obs.getNrPaddedDMs()) + dm] << endl;
+			output << (world.rank() * obs.getNrPeriods()) + period << " " << fixed << setprecision(6) << (obs.getFirstPeriod() + (period * obs.getPeriodStep())) / static_cast< float > (obs.getNrSamplesPerSecond()) << " " << dm << " " << setprecision(3) << obs.getFirstDM() + (dm * obs.getDMStep()) << " " << snrTable[(period * obs.getNrPaddedDMs()) + dm] << endl;
 		}
 	}
 	output.close();
