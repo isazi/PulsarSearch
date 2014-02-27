@@ -32,7 +32,7 @@ using std::string;
 using std::getline;
 #include <limits>
 using std::numeric_limits;
-#include <CImg.hpp>
+#include <CImg.h>
 using cimg_library::CImg;
 
 #include <ArgumentList.hpp>
@@ -51,7 +51,7 @@ int main(int argc, char * argv[]) {
 	float maxSNR = numeric_limits< float >::min();
 	float snrSpaceDim = 0.0f;
 	string outFilename;
-	ifstream searchFile();
+	ifstream searchFile;
 	map< map< unsigned int, unsigned int >, float > searchValues;
 
 	try {
@@ -108,13 +108,13 @@ int main(int argc, char * argv[]) {
 	CImg< unsigned char > searchImage(maxDM, maxPeriod, 1, 3);
 	Color *colorMap = getColorMap();
 	for ( map< map< unsigned int, unsigned int >, float >::const_iterator value = searchValues.begin(); value != searchValues.end(); value++ ) {
-		map< unsigned int, unsigned int > coordinates = (*value).first.begin();
+		map< unsigned int, unsigned int >::const_iterator coordinates = (*value).first.begin();
 
-		searchImage((*coordinates).first, (*coordinates).second, 0, 0) = (colorMap[static_cast< unsigned int >(((*value).second) * 257) / snrSpaceDim)]).getR();
-		searchImage((*coordinates).first, (*coordinates).second, 0, 1) = (colorMap[static_cast< unsigned int >(((*value).second) * 257) / snrSpaceDim)]).getG();
-		searchImage((*coordinates).first, (*coordinates).second, 0, 2) = (colorMap[static_cast< unsigned int >(((*value).second) * 257) / snrSpaceDim)]).getB();
+		searchImage((*coordinates).first, (*coordinates).second, 0, 0) = (colorMap[static_cast< unsigned int >(((*value).second * 257) / snrSpaceDim)]).getR();
+		searchImage((*coordinates).first, (*coordinates).second, 0, 1) = (colorMap[static_cast< unsigned int >(((*value).second * 257) / snrSpaceDim)]).getG();
+		searchImage((*coordinates).first, (*coordinates).second, 0, 2) = (colorMap[static_cast< unsigned int >(((*value).second * 257) / snrSpaceDim)]).getB();
 	}
-	searchImage.save();
+	searchImage.save(outFilename.c_str());
 
 	return 0;
 }
