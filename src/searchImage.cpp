@@ -32,6 +32,8 @@ using std::string;
 using std::getline;
 #include <limits>
 using std::numeric_limits;
+#include <cctype>
+using std::isdigit;
 #include <CImg.h>
 using cimg_library::CImg;
 
@@ -72,7 +74,7 @@ int main(int argc, char * argv[]) {
 		float snr = 0.0f;
 
 		getline(searchFile, temp);
-		if ( temp[0] == '#' ) {
+		if ( ! isdigit(temp[0]) ) {
 			continue;
 		}
 		splitPoint = temp.find(" ");
