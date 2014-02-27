@@ -84,7 +84,7 @@ int main(int argc, char * argv[]) {
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
 		temp = temp.substr(splitPoint + 1);
-		snr = castToType< string, float >(temp.substr(0, splitPoint));
+		snr = castToType< string, float >(temp);
 
 		if ( DM > maxDM ) {
 			maxDM = DM;
@@ -103,9 +103,10 @@ int main(int argc, char * argv[]) {
 		container.insert(make_pair(DM, period));
 		searchValues.insert(make_pair(container, snr));
 	}
+	searchFile.close();
 	snrSpaceDim = maxSNR - minSNR;
 
-	CImg< unsigned char > searchImage(maxDM, maxPeriod, 1, 3);
+	CImg< unsigned char > searchImage(maxDM + 1, maxPeriod + 1, 1, 3);
 	Color *colorMap = getColorMap();
 	for ( map< map< unsigned int, unsigned int >, float >::const_iterator value = searchValues.begin(); value != searchValues.end(); value++ ) {
 		map< unsigned int, unsigned int >::const_iterator coordinates = (*value).first.begin();
