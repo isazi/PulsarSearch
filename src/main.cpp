@@ -411,7 +411,7 @@ int main(int argc, char * argv[]) {
 
 	if ( world.rank() == 0 ) {
 		cout << "# processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond searchTime searchGFLOPs" << endl;
-		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << maxTime << " " << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxTime << endl;
+		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << maxTime << " " << setprecision(3) << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxTime << endl;
 	}
 
 	return 0;
