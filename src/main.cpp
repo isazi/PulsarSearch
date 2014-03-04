@@ -403,7 +403,7 @@ int main(int argc, char * argv[]) {
 	double maxTime = 0.0;
 	vector< double > nodeSearchTimes(world.size());
 	gather(world, searchTime.getTotalTime() + outputTime.getTotalTime(), nodeSearchTimes, 0);
-	for ( unsigned int node = 0; node < world.size(); node++ ) {
+	for ( int node = 0; node < world.size(); node++ ) {
 		if ( nodeSearchTimes[node] > maxTime ) {
 			maxTime = nodeSearchTimes[0];
 		}
