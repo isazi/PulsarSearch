@@ -401,17 +401,23 @@ int main(int argc, char * argv[]) {
 
 	// Wait for all MPI processes
 	double maxTime = 0.0;
+	double maxKernel = 0.0;
 	vector< double > nodeSearchTimes(world.size());
+	vector< double > nodeComputationTimes(world.size());
 	gather(world, searchTime.getTotalTime() + outputTime.getTotalTime(), nodeSearchTimes, 0);
+	gather(world, (clDedisperse.getTimer()).getTotalTime() + (clFold.getTimer()).getTotalTime() + (clSNR.getTimer()).getTotalTime(), nodeComputationTimes, 0);
 	for ( int node = 0; node < world.size(); node++ ) {
 		if ( nodeSearchTimes[node] > maxTime ) {
 			maxTime = nodeSearchTimes[0];
 		}
+		if ( nodeComputationTimes[node] > maxKernel ) {
+			maxKernel = nodeComputationTimes[node];
+		}
 	}
 
 	if ( world.rank() == 0 ) {
-		cout << "# processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond searchTime searchGFLOPs" << endl;
-		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << maxTime << " " << setprecision(3) << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxTime << endl;
+		cout << "# processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond searchTime searchGFLOPs computationTime computationGFLOPs" << endl;
+		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << maxTime << " " << setprecision(3) << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxTime << " " << maxKernel << " " << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxKernel << endl;
 	}
 
 	return 0;
