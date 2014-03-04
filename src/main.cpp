@@ -400,11 +400,18 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Wait for all MPI processes
-	world.barrier();
+	double maxTime = 0.0;
+	vector< double > nodeSearchTimes(world.size());
+	gather(world, searchTime.getTotalTime() + outputTime.getTotalTime(), nodeSearchTimes, 0);
+	for ( unsigned int node = 0; node < world.size(); node++ ) {
+		if ( nodeSearchTimes[node] > maxTime ) {
+			maxTime = nodeSearchTimes[0];
+		}
+	}
 
 	if ( world.rank() == 0 ) {
-		cout << "# processedSeconds nrDMs firstDM DMStep nrPeriods firstPeriod periodStep nrBins nrSamplesPerSecond searchTime searchAverageTime err inputPreProcessingTime inputPreProcessingAverageTime err outputTime H2DTime H2DAverageTime err D2HTime dedispersionTime dedispersionAverageTime err transposeTime transposeAverageTime err foldingTime foldingAverageTime err snrTime" << endl;
-		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getFirstDM() << " " << obs.getDMStep() << " " << obs.getNrPeriods() << " " << obs.getFirstPeriod() << " " << obs.getPeriodStep() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << searchTime.getTotalTime() << " " << searchTime.getAverageTime() << " " << searchTime.getStdDev() << " " << inputPreTime.getTotalTime() << " " << inputPreTime.getAverageTime() << " " << inputPreTime.getStdDev() << " " << outputTime.getTotalTime() << " " << dispersedData.getH2DTimer().getAverageTime() << " " << dispersedData.getH2DTimer().getStdDev() << " " << snrTable.getD2HTimer().getAverageTime() << " " << snrTable.getD2HTimer().getStdDev() << " " << clDedisperse.getTimer().getTotalTime() << " " << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << " " << clTranspose.getTimer().getTotalTime() << " " << clTranspose.getTimer().getAverageTime() << " " << clTranspose.getTimer().getStdDev() << " " << clFold.getTimer().getTotalTime() << " " << clFold.getTimer().getAverageTime() << " " << clFold.getTimer().getStdDev() << " " << clSNR.getTimer().getTotalTime() << endl;
+		cout << "# processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond searchTime searchGFLOPs" << endl;
+		cout << fixed << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << maxTime << " " << (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP()) / maxTime << endl;
 	}
 
 	return 0;
