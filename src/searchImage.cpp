@@ -44,6 +44,8 @@ using AstroData::Color;
 using AstroData::getColorMap;
 #include <utils.hpp>
 using isa::utils::castToType;
+#include <Exceptions.hpp>
+using isa::Exceptions::EmptyCommandLine;
 
 
 int main(int argc, char * argv[]) {
@@ -61,6 +63,10 @@ int main(int argc, char * argv[]) {
 
 		searchFile.open(args.getSwitchArgument< string >("-input"));
 		outFilename = args.getSwitchArgument< string >("-output");
+	} catch ( EmptyCommandLine err ) {
+		cerr << argv[0] << " -input ... -output ..." << endl;
+		return 1;
+
 	} catch ( exception &err ) {
 		cerr << err.what() << endl;
 		return 1;
