@@ -416,8 +416,8 @@ int main(int argc, char * argv[]) {
 	}
 
 	if ( world.rank() == 0 ) {
-		cout << "# nodes processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond searchTime searchGFLOPs mainLoopTime mainLoopGFLOPs mainLoopAverage" << endl;
-		cout << fixed << world.size() << " " << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << maxTime << " " << setprecision(3) << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxTime << " " << maxKernel << " " << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxKernel << " " << maxKernel / (1 + obs.getNrSeconds() - secondsToBuffer) << endl;
+		cout << "# nodes accelerator processedSeconds nrDMs nrPeriods nrBins nrSamplesPerSecond searchTime mainLoopTime mainLoopAverageTime searchGFLOPs mainLoopGFLOPs" << endl;
+		cout << fixed << world.size() << " " << deviceName << " " << 1 + obs.getNrSeconds() - secondsToBuffer << " " << obs.getNrDMs() << " " << obs.getNrPeriods() << " " << obs.getNrBins() << " " << obs.getNrSamplesPerSecond() << " " << setprecision(6) << maxTime << " " << maxKernel << " " << maxKernel / (1 + obs.getNrSeconds() - secondsToBuffer) << " " << setprecision(3) << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxTime << " " << (world.size() * (((1 + obs.getNrSeconds() - secondsToBuffer) * (clDedisperse.getGFLOP() + clFold.getGFLOP())) + clSNR.getGFLOP())) / maxKernel  << endl;
 	}
 
 	return 0;
