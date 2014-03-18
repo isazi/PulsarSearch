@@ -112,7 +112,7 @@ int main(int argc, char * argv[]) {
     Color *colorMap = getColorMap();
     for ( unsigned int period = 0; period < nrPeriods; period++ ) {
         for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
-            float snr = snrSpace[(period * nrDMs + DM];
+            float snr = snrSpace[(period * nrDMs) + DM];
             searchImage(DM, period, 0, 0) = (colorMap[static_cast< unsigned int >((snr * 257) / snrSpaceDim)]).getR();
             searchImage(DM, period, 0, 1) = (colorMap[static_cast< unsigned int >((snr * 257) / snrSpaceDim)]).getG();
             searchImage(DM, period, 0, 2) = (colorMap[static_cast< unsigned int >((snr * 257) / snrSpaceDim)]).getB();
