@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
         nrDMs = args.getSwitchArgument< unsigned int >("-dms");
         nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
     } catch ( EmptyCommandLine err ) {
-        cerr << argv[0] << " -input ... -output ..." << endl;
+        cerr << argv[0] << " -input ... -output ... -dms ... -periods ..." << endl;
         return 1;
     } catch ( exception &err ) {
         cerr << err.what() << endl;
