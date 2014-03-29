@@ -161,10 +161,10 @@ int main(int argc, char * argv[]) {
 	vector< cl::Platform > *clPlatforms = new vector< cl::Platform >();
 	vector< cl::Device > *clDevices = new vector< cl::Device >();
 	vector< vector< cl::CommandQueue > > *clQueues = new vector< vector < cl::CommandQueue > >();
-	
+
 	try {
 		initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 		return 1;
 	}
@@ -247,7 +247,7 @@ int main(int argc, char * argv[]) {
 		snrTable.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		snrTable.setDeviceWriteOnly();
 		snrTable.allocateDeviceData();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 		return 1;
 	}
@@ -304,7 +304,7 @@ int main(int argc, char * argv[]) {
 		clSNR.setNrPeriodsPerBlock(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
 		clSNR.setPulsarPipeline();
 		clSNR.generateCode();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 		return 1;
 	}
@@ -340,7 +340,7 @@ int main(int argc, char * argv[]) {
 			} else {
 				clFold(second, &transposedData, &foldedData, &counterData1, &counterData0);
 			}
-		} catch ( OpenCLError err ) {
+		} catch ( OpenCLError &err ) {
 			cerr << err.what() << endl;
 			return 1;
 		}
@@ -360,7 +360,7 @@ int main(int argc, char * argv[]) {
 		transposedData.deleteDeviceData();
 		counterData0.deleteDeviceData();
 		counterData1.deleteDeviceData();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 	}
 
@@ -376,7 +376,7 @@ int main(int argc, char * argv[]) {
 		outputTime.stop();
 		foldedData.deleteDeviceData();
 		foldedData.deleteHostData();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 		return 1;
 	}
@@ -395,7 +395,7 @@ int main(int argc, char * argv[]) {
 	try {
 		snrTable.deleteDeviceData();
 		snrTable.deleteHostData();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 	}
 
