@@ -45,76 +45,76 @@ using isa::Exceptions::EmptyCommandLine;
 
 
 int main(int argc, char * argv[]) {
-    unsigned int nrDMs = 0;
-    unsigned int nrPeriods = 0;
-    float minSNR = numeric_limits< float >::max();
-    float maxSNR = numeric_limits< float >::min();
-    float snrSpaceDim = 0.0f;
-    float * snrSpace = 0;
-    string outFilename;
-    ifstream searchFile;
+		unsigned int nrDMs = 0;
+		unsigned int nrPeriods = 0;
+		float minSNR = numeric_limits< float >::max();
+		float maxSNR = numeric_limits< float >::min();
+		float snrSpaceDim = 0.0f;
+		float * snrSpace = 0;
+		string outFilename;
+		ifstream searchFile;
 
-    try {
-        ArgumentList args(argc, argv);
+		try {
+				ArgumentList args(argc, argv);
 
-        searchFile.open(args.getSwitchArgument< string >("-input"));
-        outFilename = args.getSwitchArgument< string >("-output");
-        nrDMs = args.getSwitchArgument< unsigned int >("-dms");
-        nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
-    } catch ( EmptyCommandLine err ) {
-        cerr << argv[0] << " -input ... -output ... -dms ... -periods ..." << endl;
-        return 1;
-    } catch ( exception &err ) {
-        cerr << err.what() << endl;
-        return 1;
-    }
+				searchFile.open(args.getSwitchArgument< string >("-input"));
+				outFilename = args.getSwitchArgument< string >("-output");
+				nrDMs = args.getSwitchArgument< unsigned int >("-dms");
+				nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
+		} catch ( EmptyCommandLine err ) {
+				cerr << argv[0] << " -input ... -output ... -dms ... -periods ..." << endl;
+				return 1;
+		} catch ( exception &err ) {
+				cerr << err.what() << endl;
+				return 1;
+		}
 
-    snrSpace = new float [nrDMs * nrPeriods];
-    while ( ! searchFile.eof() ) {
-        string temp;
-        unsigned int splitPoint = 0;
-        unsigned int DM = 0;
-        unsigned int period = 0;
-        float snr = 0.0f;
+		snrSpace = new float [nrDMs * nrPeriods];
+		while ( ! searchFile.eof() ) {
+				string temp;
+				unsigned int splitPoint = 0;
+				unsigned int DM = 0;
+				unsigned int period = 0;
+				float snr = 0.0f;
 
-        getline(searchFile, temp);
-        if ( ! isdigit(temp[0]) ) {
-            continue;
-        }
-        splitPoint = temp.find(" ");
-        period = castToType< string, unsigned int >(temp.substr(0, splitPoint));
-        temp = temp.substr(splitPoint + 1);
-        splitPoint = temp.find(" ");
-        temp = temp.substr(splitPoint + 1);
-        DM = castToType< string, unsigned int >(temp.substr(0, splitPoint));
-        temp = temp.substr(splitPoint + 1);
-        splitPoint = temp.find(" ");
-        temp = temp.substr(splitPoint + 1);
-        snr = castToType< string, float >(temp);
+				getline(searchFile, temp);
+				if ( ! isdigit(temp[0]) ) {
+						continue;
+				}
+				splitPoint = temp.find(" ");
+				period = castToType< string, unsigned int >(temp.substr(0, splitPoint));
+				temp = temp.substr(splitPoint + 1);
+				splitPoint = temp.find(" ");
+				temp = temp.substr(splitPoint + 1);
+				DM = castToType< string, unsigned int >(temp.substr(0, splitPoint));
+				temp = temp.substr(splitPoint + 1);
+				splitPoint = temp.find(" ");
+				temp = temp.substr(splitPoint + 1);
+				snr = castToType< string, float >(temp);
 
-        if ( snr > maxSNR ) {
-            maxSNR = snr;
-        }
-        if ( snr < minSNR ) {
-            minSNR = snr;
-        }
+				if ( snr > maxSNR ) {
+						maxSNR = snr;
+				}
+				if ( snr < minSNR ) {
+						minSNR = snr;
+				}
 
-        snrSpace[(period * nrDMs) + DM] = snr;
-    }
-    searchFile.close();
-    snrSpaceDim = maxSNR - minSNR;
+				snrSpace[(period * nrDMs) + DM] = snr;
+		}
+		searchFile.close();
+		snrSpaceDim = maxSNR - minSNR;
 
-    CImg< unsigned char > searchImage(nrDMs, nrPeriods, 1, 3);
-    Color *colorMap = getColorMap();
-    for ( unsigned int period = 0; period < nrPeriods; period++ ) {
-        for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
-            float snr = snrSpace[(period * nrDMs) + DM];
-            searchImage(DM, period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getR();
-            searchImage(DM, period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getG();
-            searchImage(DM, period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getB();
-        }
-    }
-    searchImage.save(outFilename.c_str());
+		CImg< unsigned char > searchImage(nrDMs, nrPeriods, 1, 3);
+		Color *colorMap = getColorMap();
+		for ( unsigned int period = 0; period < nrPeriods; period++ ) {
+				for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
+						float snr = snrSpace[(period * nrDMs) + DM];
+						searchImage(DM, period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getR();
+						searchImage(DM, period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getG();
+						searchImage(DM, period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getB();
+				}
+		}
+		searchImage.save(outFilename.c_str());
 
-    return 0;
+		return 0;
 }
