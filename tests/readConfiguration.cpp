@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
       for ( std::vector< unsigned int >::const_iterator iter2 = (*iter1).second.begin(); iter2 != (*iter1).second.end(); ++iter2 ) {
         cout << *iter2 << " ";
       }
+      cout << "; ";
     }
     cout << endl;
   }
@@ -76,8 +77,9 @@ int main(int argc, char *argv[]) {
     cout << "\t" << (*iter0).first << " ";
 
     for ( std::map< unsigned int, unsigned int >::const_iterator iter1 = (*iter0).second.begin(); iter1 != (*iter0).second.end(); ++iter1 ) {
-      cout << (*iter1).first << " " << (*iter1).second << endl;
+      cout << (*iter1).first << " " << (*iter1).second << " ;";
     }
+    cout << endl;
   }
   cout << endl;
   // Checking the folding
@@ -94,6 +96,7 @@ int main(int argc, char *argv[]) {
         for ( std::vector< unsigned int >::const_iterator iter3 = (*iter2).second.begin(); iter3 != (*iter2).second.end(); ++iter3 ) {
           cout << *iter3 << " ";
         }
+        cout << "; ";
       }
     }
     cout << endl;
@@ -113,6 +116,7 @@ int main(int argc, char *argv[]) {
         for ( std::vector< unsigned int >::const_iterator iter3 = (*iter2).second.begin(); iter3 != (*iter2).second.end(); ++iter3 ) {
           cout << *iter3 << " ";
         }
+        cout << "; ";
       }
     }
     cout << endl;

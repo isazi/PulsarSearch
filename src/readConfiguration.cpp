@@ -20,6 +20,8 @@ using std::ifstream;
 using std::make_pair;
 #include <vector>
 using std::vector;
+#include <cctype>
+using std::isalpha;
 
 #include <readConfiguration.hpp>
 #include <utils.hpp>
@@ -34,7 +36,7 @@ void readPadding(map< string, unsigned int > & padding, const string paddingFile
 		unsigned int middle = 0;
 
 		getline(paddingFile, temp);
-		if ( temp[0] == '#' ) {
+		if ( ! isalpha(temp[0]) ) {
 			continue;
 		}
 		middle = temp.find(" ");
@@ -50,7 +52,7 @@ void readVectorWidth(map< string, unsigned int > & vectorWidth, const string vec
 		unsigned int middle = 0;
 
 		getline(vectorFile, temp);
-		if ( temp[0] == '#' ) {
+		if ( ! isalpha(temp[0]) ) {
 			continue;
 		}
 		middle = temp.find(" ");
@@ -66,7 +68,7 @@ void readDedispersion(map< string, map< unsigned int, vector< unsigned int > > >
 		unsigned int splitPoint = 0;
 
 		getline(dedispersionFile, temp);
-		if ( temp[0] == '#' ) {
+		if ( ! isalpha(temp[0]) ) {
 			continue;
 		}
 		string deviceName;
@@ -109,7 +111,7 @@ void readTranspose(map< string, map< unsigned int, unsigned int > > & transposeP
 		unsigned int splitPoint = 0;
 
 		getline(transposeFile, temp);
-		if ( temp[0] == '#' ) {
+		if ( ! isalpha(temp[0]) ) {
 			continue;
 		}
 		string deviceName;
@@ -143,7 +145,7 @@ void readFolding(map< string, map< unsigned int, map< unsigned int, vector< unsi
 		unsigned int splitPoint = 0;
 
 		getline(foldingFile, temp);
-		if ( temp[0] == '#' ) {
+		if ( ! isalpha(temp[0]) ) {
 			continue;
 		}
 		string deviceName;
@@ -184,11 +186,13 @@ void readFolding(map< string, map< unsigned int, map< unsigned int, vector< unsi
 			internalContainer.insert(make_pair(nrPeriods, parameters));
 			externalContainer.insert(make_pair(nrDMs, internalContainer));
 			foldingParameters.insert(make_pair(deviceName, externalContainer));
-		} else {
+		} else if ( foldingParameters[deviceName].count(nrDMs) == 0 ) {
 			map< unsigned int, vector< unsigned int > > internalContainer;
 
 			internalContainer.insert(make_pair(nrPeriods, parameters));
 			foldingParameters[deviceName].insert(make_pair(nrDMs, internalContainer));
+		} else {
+			foldingParameters[deviceName][nrDMs].insert(make_pair(nrPeriods, parameters));
 		}
 	}
 }
@@ -201,7 +205,7 @@ void readSNR(map< string, map< unsigned int, map< unsigned int, vector< unsigned
 		unsigned int splitPoint = 0;
 
 		getline(snrFile, temp);
-		if ( temp[0] == '#' ) {
+		if ( ! isalpha(temp[0]) ) {
 			continue;
 		}
 		string deviceName;
@@ -230,11 +234,13 @@ void readSNR(map< string, map< unsigned int, map< unsigned int, vector< unsigned
 			internalContainer.insert(make_pair(nrPeriods, parameters));
 			externalContainer.insert(make_pair(nrDMs, internalContainer));
 			snrParameters.insert(make_pair(deviceName, externalContainer));
-		} else {
+		} else if ( snrParameters[deviceName].count(nrDMs) == 0 ) {
 			map< unsigned int, vector< unsigned int > > internalContainer;
 
 			internalContainer.insert(make_pair(nrPeriods, parameters));
 			snrParameters[deviceName].insert(make_pair(nrDMs, internalContainer));
+		} else {
+			snrParameters[deviceName][nrDMs].insert(make_pair(nrPeriods, parameters));
 		}
 	}
 }
