@@ -57,7 +57,7 @@ int main(int argc, char * argv[]) {
 				outFilename = args.getSwitchArgument< string >("-output");
 				nrDMs = args.getSwitchArgument< unsigned int >("-dms");
 				nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
-		} catch ( EmptyCommandLine err ) {
+		} catch ( EmptyCommandLine &err ) {
 				cerr << argv[0] << " -input ... -output ... -dms ... -periods ..." << endl;
 				return 1;
 		} catch ( exception &err ) {
@@ -112,5 +112,6 @@ int main(int argc, char * argv[]) {
 		}
 		searchImage.save(outFilename.c_str());
 
+		delete [] snrSpace;
 		return 0;
 }
