@@ -89,6 +89,10 @@ int main(int argc, char * argv[]) {
 	try {
 		ArgumentList args(argc, argv);
 
+		// Cols are associated with periods
+		unsigned int MPICols = args.getSwitchArgument< unsigned int >("-mpi_cols");
+		// Rows are associated with DMs
+		unsigned int MPIRows = args.getSwitchArgument< unsigned int >("-mpi_rows");
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
 		deviceName = args.getSwitchArgument< string >("-device_name");
@@ -125,12 +129,12 @@ int main(int argc, char * argv[]) {
 		}
 		outputFile = args.getSwitchArgument< string >("-output");
 
-		obs.setNrDMs(args.getSwitchArgument< unsigned int >("-dm_number"));
-		obs.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
+		obs.setNrDMs(args.getSwitchArgument< unsigned int >("-dm_node"));
 		obs.setDMStep(args.getSwitchArgument< float >("-dm_step"));
-		obs.setNrPeriods(args.getSwitchArgument< unsigned int >("-period_number"));
+		obs.setFirstDM(args.getSwitchArgument< float >("-dm_first") + ((world.rank() / MPIRows) * obs.getNrDMs() * obs.getDMStep()));
+		obs.setNrPeriods(args.getSwitchArgument< unsigned int >("-period_node"));
 		obs.setPeriodStep(args.getSwitchArgument< unsigned int >("-period_step"));
-		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first") + (world.rank() * (obs.getPeriodStep() * obs.getNrPeriods())));
+		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first") + ((world.rank() % MPICols) * obs.getPeriodStep() * obs.getNrPeriods()));
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( exception &err ) {
 		cerr << err.what() << endl;
