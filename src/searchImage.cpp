@@ -13,80 +13,66 @@
 // limitations under the License.
 
 #include <iostream>
-using std::cerr;
-using std::endl;
 #include <fstream>
-using std::ifstream;
 #include <exception>
-using std::exception;
 #include <string>
-using std::string;
-using std::getline;
 #include <limits>
-using std::numeric_limits;
 #include <cctype>
-using std::isdigit;
 #include <CImg.h>
-using cimg_library::CImg;
 
 #include <ArgumentList.hpp>
-using isa::utils::ArgumentList;
 #include <ColorMap.hpp>
-using AstroData::Color;
-using AstroData::getColorMap;
 #include <utils.hpp>
-using isa::utils::castToType;
 #include <Exceptions.hpp>
-using isa::Exceptions::EmptyCommandLine;
 
 
 int main(int argc, char * argv[]) {
 		unsigned int nrDMs = 0;
 		unsigned int nrPeriods = 0;
-		float minSNR = numeric_limits< float >::max();
-		float maxSNR = numeric_limits< float >::min();
+		float minSNR = std::numeric_limits< float >::max();
+		float maxSNR = std::numeric_limits< float >::min();
 		float snrSpaceDim = 0.0f;
 		float * snrSpace = 0;
-		string outFilename;
-		ifstream searchFile;
+		std::string outFilename;
+		std::ifstream searchFile;
 
 		try {
-				ArgumentList args(argc, argv);
+				isa::utils::ArgumentList args(argc, argv);
 
-				searchFile.open(args.getSwitchArgument< string >("-input"));
-				outFilename = args.getSwitchArgument< string >("-output");
+				searchFile.open(args.getSwitchArgument< std::string >("-input"));
+				outFilename = args.getSwitchArgument< std::string >("-output");
 				nrDMs = args.getSwitchArgument< unsigned int >("-dms");
 				nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
-		} catch ( EmptyCommandLine &err ) {
-				cerr << argv[0] << " -input ... -output ... -dms ... -periods ..." << endl;
+		} catch ( isa::utils::EmptyCommandLine & err ) {
+				std::cerr << argv[0] << " -input ... -output ... -dms ... -periods ..." << std::endl;
 				return 1;
-		} catch ( exception &err ) {
-				cerr << err.what() << endl;
+		} catch ( std::exception & err ) {
+				std::cerr << err.what() << std::endl;
 				return 1;
 		}
 
 		snrSpace = new float [nrDMs * nrPeriods];
 		while ( ! searchFile.eof() ) {
-				string temp;
+				std::string temp;
 				unsigned int splitPoint = 0;
 				unsigned int DM = 0;
 				unsigned int period = 0;
 				float snr = 0.0f;
 
-				getline(searchFile, temp);
-				if ( ! isdigit(temp[0]) ) {
+				std::getline(searchFile, temp);
+				if ( ! std::isdigit(temp[0]) ) {
 						continue;
 				}
 				splitPoint = temp.find(" ");
-				period = castToType< string, unsigned int >(temp.substr(0, splitPoint));
+				period = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 				temp = temp.substr(splitPoint + 1);
 				splitPoint = temp.find(" ");
 				temp = temp.substr(splitPoint + 1);
-				DM = castToType< string, unsigned int >(temp.substr(0, splitPoint));
+				DM = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 				temp = temp.substr(splitPoint + 1);
 				splitPoint = temp.find(" ");
 				temp = temp.substr(splitPoint + 1);
-				snr = castToType< string, float >(temp);
+				snr = isa::utils::castToType< std::string, float >(temp);
 
 				if ( snr > maxSNR ) {
 						maxSNR = snr;
@@ -100,8 +86,8 @@ int main(int argc, char * argv[]) {
 		searchFile.close();
 		snrSpaceDim = maxSNR - minSNR;
 
-		CImg< unsigned char > searchImage(nrDMs, nrPeriods, 1, 3);
-		Color *colorMap = getColorMap();
+		cimg_library::CImg< unsigned char > searchImage(nrDMs, nrPeriods, 1, 3);
+		AstroData::Color *colorMap = AstroData::getColorMap();
 		for ( unsigned int period = 0; period < nrPeriods; period++ ) {
 				for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
 						float snr = snrSpace[(period * nrDMs) + DM];
@@ -115,3 +101,4 @@ int main(int argc, char * argv[]) {
 		delete [] snrSpace;
 		return 0;
 }
+
