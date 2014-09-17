@@ -22,3 +22,4 @@ std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vect
 std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > snrParameters;
 
 #endif // CONFIGURATION_HPP
+
