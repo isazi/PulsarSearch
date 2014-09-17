@@ -146,9 +146,21 @@ int main(int argc, char * argv[]) {
   std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
   std::vector< dataType > snrTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
 
-
-  // Device memory allocation
+  // Device memory allocation and data transfers
   cl::Buffer shifts_d, nrSamplesPerBin_d, dispersedData_d, dedispersedData_d, transposedData_d, foldedData_d, counterData0_d, counterData1_d, snrTable_d;
+
+  try {
+    shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(unsigned int), 0, 0);
+    delete shifts;
+    samplesPerBin_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, samplesPerBin->size() * sizeof(unsigned int), 0, 0);
+    delete samplesPerBin;
+    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), 0, 0);
+    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), 0, 0);
+    transposedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
+  } catch ( isa::OpenCL::OpenCLError & err ) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
 
 	try {
 		// Shifts
