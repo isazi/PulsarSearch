@@ -13,22 +13,20 @@
 // limitations under the License.
 
 #include <string>
-using std::string;
 #include <map>
-using std::map;
 #include <vector>
-using std::vector;
 
 
 #ifndef READ_CONFIGURATION_HPP
 #define READ_CONFIGURATION_HPP
 
-void readPadding(map< string, unsigned int > & padding, const string paddingFilename);
-void readVectorWidth(map< string, unsigned int > & vectorWidth, const string vectorFilename);
-void readDedispersion(map< string, map< unsigned int, vector< unsigned int > > > & dedispersionParameters, const string dedispersionFilename);
-void readTranspose(map< string, map< unsigned int, unsigned int > > & transposeParameters, const string transposeFilename);
-void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const string foldingFilename);
-void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const string snrFilename);
+void readPadding(std::map< std::string, unsigned int > & padding, const std::string & paddingFilename);
+void readVectorWidth(std::map< std::string, unsigned int > & vectorWidth, const std::string & vectorFilename);
+void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters, const std::string & dedispersionFilename);
+void readTranspose(std::map< std::string, std::map< unsigned int, unsigned int > > & transposeParameters, const std::string & transposeFilename);
+void readFolding(std::std::map< std::std::string, std::std::map< unsigned int, std::std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const std::string & foldingFilename);
+void readSNR(std::std::map< std::std::string, std::std::map< unsigned int, std::std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const std::string & snrFilename);
 
 
 #endif // READ_CONFIGURATION_HPP
+
