@@ -18,6 +18,7 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
+#include <algorithm>
 #include <boost/mpi.hpp>
 
 #include <configuration.hpp>
@@ -144,92 +145,55 @@ int main(int argc, char * argv[]) {
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + (*shifts)[((obs.getNrDMs() - 1) * obs.getNrPaddedChannels())]);
   std::vector< unsigned int > * nrSamplesPerBin = PulsarSearch::getSamplesPerBin(obs);
   std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
-  std::vector< dataType > snrTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
+  std::vector< float > snrTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
 
   // Device memory allocation and data transfers
   cl::Buffer shifts_d, nrSamplesPerBin_d, dispersedData_d, dedispersedData_d, transposedData_d, foldedData_d, counterData0_d, counterData1_d, snrTable_d;
 
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(unsigned int), 0, 0);
-    delete shifts;
     samplesPerBin_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, samplesPerBin->size() * sizeof(unsigned int), 0, 0);
-    delete samplesPerBin;
     dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), 0, 0);
     dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), 0, 0);
     transposedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
+    foldedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
+    counterData0_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPaddedPeriods() * sizeof(unsigned int), 0, 0);
+    counterData1_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPaddedPeriods() * sizeof(unsigned int), 0, 0);
+    snrTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(float), 0, 0);
+
+    // shifts_d
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts->data()), 0, 0);
+    delete shifts_d;
+    // samplesPerBin_d
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(samplesPerBin_d, CL_TRUE, 0, samplesPerBin->size() * sizeof(unsigned int), reinterpret_cast< void * >(samplesPerBin->data()), 0, 0);
+    delete samplesPerBin;
+    // foldedData_d
+    std::vector< dataType > transferDataType(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
+    std::fill(transferDataType.begin(), transferDataType.end(), 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(foldedData_d, CL_TRUE, 0, transferDataType.size() * sizeof(dataType), reinterpret_cast< void * >(transferDataType.data()), 0, 0);
+    // counterData0_d and counterData1_d
+    std::vector< unsigned int > transferUInt(obs.getNrBins() * obs.getNrPaddedPeriods());
+    std::fill(transferUInt.begin(), transferUInt.end(), 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(counterData0_d, CL_TRUE, 0, transferUInt.size() * sizeof(unsigned int), reinterpret_cast< void * >(transferUInt.data()), 0, 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(counterData1_d, CL_TRUE, 0, transferUInt.size() * sizeof(unsigned int), reinterpret_cast< void * >(transferUInt.data()), 0, 0);
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
 
-	try {
-		// Shifts
-		shifts->setCLContext(clContext);
-		shifts->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		shifts->allocateDeviceData();
-		shifts->copyHostToDevice();
-		// nrSamplesPerBin
-		nrSamplesPerBin.allocateHostData(*(getNrSamplesPerBin(obs)));
-		nrSamplesPerBin.setCLContext(clContext);
-		nrSamplesPerBin.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		nrSamplesPerBin.setDeviceReadOnly();
-		nrSamplesPerBin.allocateDeviceData();
-		nrSamplesPerBin.copyHostToDevice();
-		nrSamplesPerBin.deleteHostData();
-		// DispersedData
-		dispersedData.allocateHostData(secondsToBuffer * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
-		dispersedData.setCLContext(clContext);
-		dispersedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		dispersedData.setDeviceReadOnly();
-		dispersedData.allocateDeviceData();
-		// DedispersedData
-		dedispersedData.setCLContext(clContext);
-		dedispersedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		dedispersedData.allocateDeviceData(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
-		// TransposedData
-		transposedData.setCLContext(clContext);
-		transposedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		transposedData.allocateDeviceData(obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs());
-		// FoldedData
-		foldedData.setCLContext(clContext);
-		foldedData.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		foldedData.allocateHostData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
-		foldedData.allocateDeviceData();
-		foldedData.blankHostData();
-		foldedData.copyHostToDevice();
-		foldedData.deleteHostData();
-		// CounterData0
-		counterData0.setCLContext(clContext);
-		counterData0.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		counterData0.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedBins());
-		counterData0.blankHostData();
-		counterData0.allocateDeviceData();
-		counterData0.copyHostToDevice();
-		counterData0.deleteHostData();
-		// CounterData1
-		counterData1.setCLContext(clContext);
-		counterData1.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		counterData1.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedBins());
-		counterData1.blankHostData();
-		counterData1.allocateDeviceData();
-		counterData1.copyHostToDevice();
-		counterData1.deleteHostData();
-		// SNRData
-		snrTable.allocateHostData(obs.getNrPeriods() * obs.getNrPaddedDMs());
-		snrTable.setCLContext(clContext);
-		snrTable.setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		snrTable.setDeviceWriteOnly();
-		snrTable.allocateDeviceData();
-	} catch ( OpenCLError &err ) {
-		std::cerr << err.what() << std::endl;
-		return 1;
-	}
-
 	if ( DEBUG && world.rank() == 0 ) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
-		hostMemory += dispersedData.getHostDataSize() + snrTable.getHostDataSize();
-		deviceMemory += shifts->getDeviceDataSize() + nrSamplesPerBin.getDeviceDataSize() + dispersedData.getDeviceDataSize() + dedispersedData.getDeviceDataSize() + transposedData.getDeviceDataSize() + foldedData.getDeviceDataSize() + (2 * counterData0.getDeviceDataSize()) + snrTable.getDeviceDataSize();
+
+    hostMemory += dispersedData.size() * sizeof(dataType);
+    hostMemory += snrTable.size() * sizeof(float);
+    deviceMemory += hostMemory;
+    deviceMemory += obs.getNrDMs() * obs.getNrPaddedChannels() * sizeof(unsigned int);
+    deviceMemory += obs.getNrPeriods() * obs.getNrBins() * isa::utils::pad(2, obs.getPadding()) * sizeof(unsigned int);
+    deviceMemory += obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
+    deviceMemory += obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs() * sizeof(dataType);
+    deviceMemory += obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(dataType);
+    deviceMemory += obs.getNrBins() * obs.getNrPaddedPeriods() * 2 * sizeof(unsigned int);
 
 		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
 		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
