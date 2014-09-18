@@ -174,7 +174,10 @@ void readFolding(map< std::string, map< unsigned int, map< unsigned int, std::ve
 		splitPoint = temp.find(" ");
 		parameters[4] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
-		parameters[5] = isa::utils::castToType< std::string, unsigned int >(temp);
+		splitPoint = temp.find(" ");
+		parameters[5] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		parameters[6] = isa::utils::castToType< std::string, unsigned int >(temp);
 
 		if ( foldingParameters.count(deviceName) == 0 ) {
 			map< unsigned int, map< unsigned int, std::vector< unsigned int > > > externalContainer;
@@ -222,7 +225,13 @@ void readSNR(map< std::string, map< unsigned int, map< unsigned int, std::vector
 		splitPoint = temp.find(" ");
 		parameters[0] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
-		parameters[1] = isa::utils::castToType< std::string, unsigned int >(temp);
+		splitPoint = temp.find(" ");
+		parameters[1] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		parameters[2] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		parameters[3] = isa::utils::castToType< std::string, unsigned int >(temp);
 
 		if ( snrParameters.count(deviceName) == 0 ) {
 			map< unsigned int, map< unsigned int, std::vector< unsigned int > > > externalContainer;
