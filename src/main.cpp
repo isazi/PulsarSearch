@@ -46,6 +46,8 @@ int main(int argc, char * argv[]) {
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
 	unsigned int bytesToSkip = 0;
+  unsigned int secondsToBuffer = 0;
+  unsigned int remainingSamples = 0;
 	std::string deviceName;
 	std::string dataFile;
 	std::string headerFile;
@@ -100,21 +102,21 @@ int main(int argc, char * argv[]) {
 		}
 		outputFile = args.getSwitchArgument< std::string >("-output");
 
-		obs.setNrDMs(args.getSwitchArgument< unsigned int >("-dm_node"));
-		obs.setDMStep(args.getSwitchArgument< float >("-dm_step"));
-		obs.setFirstDM(args.getSwitchArgument< float >("-dm_first") + ((world.rank() / MPIRows) * obs.getNrDMs() * obs.getDMStep()));
-		obs.setNrPeriods(args.getSwitchArgument< unsigned int >("-period_node"));
-		obs.setPeriodStep(args.getSwitchArgument< unsigned int >("-period_step"));
-		obs.setFirstPeriod(args.getSwitchArgument< unsigned int >("-period_first") + ((world.rank() % MPICols) * obs.getPeriodStep() * obs.getNrPeriods()));
+    obs.setDMRange(args.getSwitchArgument< unsigned int >("-dm_node"), args.getSwitchArgument< float >("-dm_first") + ((world.rank() / MPIRows) * obs.getNrDMs() * obs.getDMStep()), args.getSwitchArgument< float >("-dm_step"));
+    obs.setPeriodRange(args.getSwitchArgument< unsigned int >("-period_node"), args.getSwitchArgument< unsigned int >("-period_first") + ((world.rank() % MPICols) * obs.getPeriodStep() * obs.getNrPeriods()), args.getSwitchArgument< unsigned int >("-period_step"));
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
-	} catch ( std::exception & err ) {
+	} catch ( isa::utils::EmptyCommandLine & err ) {
+    // TODO: usage string
+    std::cerr << std::endl;
+    return 1;
+  } catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
 		return 1;
 	}
 
 	// Load observation data
-  isa::utils::Timer loadTime("LoadInputTimer");
-	std::vector< CLData< dataType > * > * input = new std::vector< CLData< dataType > * >(1);
+  isa::utils::Timer loadTime();
+	std::vector< std::vector< dataType > * > * input = new std::vector< std::vector< dataType > * >(1);
 	loadTime.start();
 	if ( dataLOFAR ) {
     AstroData::readLOFAR(headerFile, dataFile, obs, *input);
@@ -143,6 +145,8 @@ int main(int argc, char * argv[]) {
 	// Host memory allocation
   std::vector< unsigned int > * shifts = PulsarSearch::getShifts(obs);
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + (*shifts)[((obs.getNrDMs() - 1) * obs.getNrPaddedChannels())]);
+  secondsToBuffer = std::ceil(obs.getNrSamplesPerDispersedChannel() / static_cast< float >(obs.getNrSamplesPerSecond()));
+  remainingSamples = obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond();
   std::vector< unsigned int > * nrSamplesPerBin = PulsarSearch::getSamplesPerBin(obs);
   std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
   std::vector< float > snrTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
@@ -163,9 +167,8 @@ int main(int argc, char * argv[]) {
 
     // shifts_d
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts->data()), 0, 0);
-    delete shifts_d;
-    // samplesPerBin_d
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(samplesPerBin_d, CL_TRUE, 0, samplesPerBin->size() * sizeof(unsigned int), reinterpret_cast< void * >(samplesPerBin->data()), 0, 0);
+    // nrSamplesPerBin_d
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(nrSamplesPerBin_d, CL_TRUE, 0, nrSamplesPerBin->size() * sizeof(unsigned int), reinterpret_cast< void * >(nrSamplesPerBin->data()), 0, 0);
     delete samplesPerBin;
     // foldedData_d
     std::vector< dataType > transferDataType(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
@@ -188,7 +191,7 @@ int main(int argc, char * argv[]) {
     hostMemory += dispersedData.size() * sizeof(dataType);
     hostMemory += snrTable.size() * sizeof(float);
     deviceMemory += hostMemory;
-    deviceMemory += obs.getNrDMs() * obs.getNrPaddedChannels() * sizeof(unsigned int);
+    deviceMemory += shifts->size() * sizeof(unsigned int);
     deviceMemory += obs.getNrPeriods() * obs.getNrBins() * isa::utils::pad(2, obs.getPadding()) * sizeof(unsigned int);
     deviceMemory += obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
     deviceMemory += obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs() * sizeof(dataType);
@@ -200,55 +203,42 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Generate OpenCL kernels
-	Dedispersion< dataType > clDedisperse("clDedisperse", dataName);
-	Transpose< dataType > clTranspose("clTranspose", dataName);
-	Folding< dataType > clFold("clFold", dataName);
-	SNR< dataType > clSNR("clSNR", dataName);
+  std::string * code;
+  cl::Kernel * dedispersionK, * foldingK, transposeK, snrK;
+
+  code = PulsarSearch::getDedispersionOpenCL< dataType >(dedispersionParameters[deviceName][obs.getNrDMs()][0], dedispersionParameters[deviceName][obs.getNrDMs()][1], dedispersionParameters[deviceName][obs.getNrDMs()][2], dedispersionParameters[deviceName][obs.getNrDMs()][3], dedispersionParameters[deviceName][obs.getNrDMs()][4], typeName, obs, *shifts);
 	try {
-		// Dedispersion
-		clDedisperse.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		clDedisperse.setNrSamplesPerBlock(dedispersionParameters[deviceName][obs.getNrDMs()][0]);
-		clDedisperse.setNrDMsPerBlock(dedispersionParameters[deviceName][obs.getNrDMs()][1]);
-		clDedisperse.setNrSamplesPerThread(dedispersionParameters[deviceName][obs.getNrDMs()][2]);
-		clDedisperse.setNrDMsPerThread(dedispersionParameters[deviceName][obs.getNrDMs()][3]);
-		clDedisperse.setNrSamplesPerDispersedChannel(secondsToBuffer * obs.getNrSamplesPerPaddedSecond());
-		clDedisperse.setObservation(&obs);
-		clDedisperse.setShifts(shifts);
-		clDedisperse.generateCode();
-		shifts->deleteHostData();
-		// Transposition
-		clTranspose.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		clTranspose.setNrThreadsPerBlock(transposeParameters[deviceName][obs.getNrDMs()]);
-		clTranspose.setDimensions(obs.getNrDMs(), obs.getNrSamplesPerSecond());
-		clTranspose.setPaddingFactor(padding[deviceName]);
-		clTranspose.setVectorWidth(std::vectorWidth[deviceName]);
-		clTranspose.generateCode();
-		// Folding
-		clFold.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		clFold.setObservation(&obs);
-		clFold.setNrSamplesPerBin(&nrSamplesPerBin);
-		clFold.setNrDMsPerBlock(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0]);
-		clFold.setNrPeriodsPerBlock(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
-		clFold.setNrBinsPerBlock(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
-		clFold.setNrDMsPerThread(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3]);
-		clFold.setNrPeriodsPerThread(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4]);
-		clFold.setNrBinsPerThread(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5]);
-		clFold.generateCode();
-		// SNR
-		clSNR.bindOpenCL(clContext, &(clDevices->at(clDeviceID)), &((clQueues->at(clDeviceID)).at(0)));
-		clSNR.setObservation(&obs);
-		clSNR.setNrDMsPerBlock(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0]);
-		clSNR.setNrPeriodsPerBlock(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
-		clSNR.setPulsarPipeline();
-		clSNR.generateCode();
-	} catch ( OpenCLError &err ) {
-		std::cerr << err.what() << std::endl;
+    dedispersionK = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+	} catch ( isa::OpenCL::OpenCLError & err ) {
+    std::cerr << err.what() << std::endl;
 		return 1;
 	}
+  delete shifts_d;
+  code = PulsarSearch::getFoldingOpenCL(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6], typeName, observation);
+  try {
+    foldingK = isa::OpenCL::compile("folding", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+  } catch ( isa::OpenCL::OpenCLError & err ) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
+  code = isa::OpenCL::getTransposeOpenCL(transposeParameters[deviceName][obs.getNrDMs()], obs.getNrSamplesPerSecond(), obs.getNrPaddedDMs(), obs.getPadding(), vectorWidth[deviceName], typeName);
+  try {
+    transposeK = isa::OpenCL::compile("transpose", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+  } catch ( isa::OpenCL::OpenCLError & err ) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
+  code = PulsarSearch::getSNROpenCL(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], typeName, observation);
+  try {
+    snrK = isa::OpenCL::compile("snr", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+  } catch ( isa::OpenCL::OpenCLError & err ) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
 
 	// Search loop
-  isa::utils::Timer searchTime("SearchTimer");
-  isa::utils::Timer inputPreTime("InputPreProcessingTimer");
+  isa::utils::Timer searchTime();
+  isa::utils::Timer inputPreTime();
 	if ( DEBUG && world.rank() == 0 ) {
 		std::cout << "Starting the search." << std::endl;
 		std::cout << "Processing seconds: ";
@@ -261,9 +251,10 @@ int main(int argc, char * argv[]) {
 		// Prepare the input
 		inputPreTime.start();
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
-				memcpy(dispersedData.getRawHostDataAt((channel * secondsToBuffer * obs.getNrSamplesPerPaddedSecond()) + (chunk * obs.getNrSamplesPerSecond())), (input->at(second + chunk))->getRawHostDataAt(channel * obs.getNrSamplesPerPaddedSecond()), obs.getNrSamplesPerSecond() * sizeof(dataType));
+			for ( unsigned int chunk = 0; chunk < secondsToBuffer - 1; chunk++ ) {
+        memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), (input->at(second + chunk))[channel * obs.getNrSamplesPerPaddedSecond()], obs.getNrSamplesPerSecond() * sizeof(dataType));
 			}
+      memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + ((secondsToBuffer - 1) * obs.getNrSamplesPerSecond())])), (input->at(second + (secondsToBuffer - 1)))[channel * obs.getNrSamplesPerPaddedSecond()], remainingSamples * sizeof(dataType));
 		}
 		inputPreTime.stop();
 
@@ -302,7 +293,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Store output
-  isa::utils::Timer outputTime("OutputTimer");
+  isa::utils::Timer outputTime();
 	if ( DEBUG && world.rank() == 0 ) {
 		std::cout << "Analyzing processed data." << std::endl;
 	}
