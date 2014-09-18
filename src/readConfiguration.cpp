@@ -84,7 +84,10 @@ void readDedispersion(map< std::string, map< unsigned int, std::vector< unsigned
 		splitPoint = temp.find(" ");
 		parameters[2] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
-		parameters[3] = isa::utils::castToType< std::string, unsigned int >(temp);
+		splitPoint = temp.find(" ");
+		parameters[3] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		parameters[4] = isa::utils::castToType< std::string, unsigned int >(temp);
 
 		if ( dedispersionParameters.count(deviceName) == 0 ) {
 			map< unsigned int, std::vector< unsigned int > > container;
