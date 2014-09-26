@@ -206,7 +206,7 @@ int main(int argc, char * argv[]) {
 
 	// Generate OpenCL kernels
   std::string * code;
-  cl::Kernel * dedispersionK, * foldingK, transposeK, snrK;
+  cl::Kernel * dedispersionK, * foldingK, * transposeK, * snrK;
 
   code = PulsarSearch::getDedispersionOpenCL(dedispersionParameters[deviceName][obs.getNrDMs()][0], dedispersionParameters[deviceName][obs.getNrDMs()][1], dedispersionParameters[deviceName][obs.getNrDMs()][2], dedispersionParameters[deviceName][obs.getNrDMs()][3], dedispersionParameters[deviceName][obs.getNrDMs()][4], typeName, obs, *shifts);
 	try {
