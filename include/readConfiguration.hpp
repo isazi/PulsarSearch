@@ -24,8 +24,8 @@ void readPadding(std::map< std::string, unsigned int > & padding, const std::str
 void readVectorWidth(std::map< std::string, unsigned int > & vectorWidth, const std::string & vectorFilename);
 void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters, const std::string & dedispersionFilename);
 void readTranspose(std::map< std::string, std::map< unsigned int, unsigned int > > & transposeParameters, const std::string & transposeFilename);
-void readFolding(std::std::map< std::std::string, std::std::map< unsigned int, std::std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const std::string & foldingFilename);
-void readSNR(std::std::map< std::std::string, std::std::map< unsigned int, std::std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const std::string & snrFilename);
+void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const std::string & foldingFilename);
+void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const std::string & snrFilename);
 
 
 #endif // READ_CONFIGURATION_HPP
