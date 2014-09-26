@@ -91,19 +91,19 @@ int main(int argc, char * argv[]) {
 			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
 			obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
-			obs.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
+      obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-low_freq"), args.getSwitchArgument< float >("-channel_band"));
 			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
-			obs.setMinFreq(args.getSwitchArgument< float >("-low_freq"));
-			obs.setChannelBandwidth(args.getSwitchArgument< float >("-channel_band"));
-			obs.setMaxFreq(obs.getMinFreq() + ((obs.getNrChannels() - 1) * obs.getChannelBandwidth()));
 		} else {
 			std::cerr << "Need to specify the -header and -data arguments." << std::endl;
 			throw std::exception();
 		}
 		outputFile = args.getSwitchArgument< std::string >("-output");
 
-    obs.setDMRange(args.getSwitchArgument< unsigned int >("-dm_node"), args.getSwitchArgument< float >("-dm_first") + ((world.rank() / MPIRows) * obs.getNrDMs() * obs.getDMStep()), args.getSwitchArgument< float >("-dm_step"));
-    obs.setPeriodRange(args.getSwitchArgument< unsigned int >("-period_node"), args.getSwitchArgument< unsigned int >("-period_first") + ((world.rank() % MPICols) * obs.getPeriodStep() * obs.getNrPeriods()), args.getSwitchArgument< unsigned int >("-period_step"));
+    unsigned int tempUInts[3] = {args.getSwitchArgument< unsigned int >("-dm_node"), 0, 0};
+    float tempFloats[2] = {args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step")};
+    obs.setDMRange(tempUInts[0], tempFloats[0] + ((world.rank() / MPIRows) * tempUInts[0] * tempFloats[1]), tempFloats[1]);
+    tempUInts = {args.getSwitchArgument< unsigned int >("-period_node"), args.getSwitchArgument< unsigned int >("-period_first"), args.getSwitchArgument< unsigned int >("-period_step")};
+    obs.setPeriodRange(tempUInts[0], tempUInts[1] + ((world.rank() % MPICols) * tempUInts[0] * tempUInts[2]), tempUInts[2]);
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
     // TODO: usage string
@@ -267,6 +267,7 @@ int main(int argc, char * argv[]) {
   isa::utils::Timer snrTime;
   isa::utils::Timer outputStoreTime;
 
+  world.barrier();
   searchTime.start();
 	if ( DEBUG && world.rank() == 0 ) {
 		std::cout << "Starting the search." << std::endl;
@@ -341,42 +342,33 @@ int main(int argc, char * argv[]) {
 		std::cerr << err.what() << std::endl;
 		return 1;
 	}
+
 	if ( DEBUG && world.rank() == 0 ) {
 		std::cout << "Saving output to disk." << std::endl;
 	}
 	std::ofstream output;
-  output << std::fixed << std::setprecision(3);
-	output.open(outputFile + "_" + isa::utils::toString(world.rank()));
+	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dat");
+  output << "# period DM SNR" << std::endl;
+  output << std::fixed << std::setprecision(6);
 	for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
 		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-			output << (world.rank() * obs.getNrPeriods()) + period << " ";
-      output << (obs.getFirstPeriod() + (period * obs.getPeriodStep())) / static_cast< float > (obs.getNrSamplesPerSecond()) << " ";
-      output << dm << " ";
-      output << obs.getFirstDM() + (dm * obs.getDMStep()) << " ";
+      output << ((world.rank() % MPICols) * obs.getNrPeriods()) + period << " ";
+      output << ((world.rank() / MPIRows) * obs.getNrDMs()) + dm << " ";
       output << snrTable[(period * obs.getNrPaddedDMs()) + dm] << std::endl;
 		}
 	}
 	output.close();
-
-	// Wait for all MPI processes
-	double maxTime = 0.0;
-	double maxKernel = 0.0;
-	std::vector< double > nodeSearchTimes(world.size());
-	std::vector< double > nodeMainLoopTimes(world.size());
-	gather(world, searchTime.getTotalTime() + outputTime.getTotalTime(), nodeSearchTimes, 0);
-	gather(world, (clDedisperse.getTimer()).getTotalTime() + (clFold.getTimer()).getTotalTime(), nodeMainLoopTimes, 0);
-	for ( int node = 0; node < world.size(); node++ ) {
-		if ( nodeSearchTimes[node] > maxTime ) {
-			maxTime = nodeSearchTimes[0];
-		}
-		if ( nodeMainLoopTimes[node] > maxKernel ) {
-			maxKernel = nodeMainLoopTimes[node];
-		}
-	}
-
-	if ( world.rank() == 0 ) {
-		std::cout << " " << std::endl;
-	}
+	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stat");
+  output << "# searchTime inputLoadTotal inputLoadAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err foldingTotal foldingAvg err snrTotal snrAvg err outputStoreTotal outputStoreAvg err" << std::endl;
+  output << std::fixed << std::setprecision(6);
+  output << searchTime.getTotalTime() << " ";
+  output << inputLoadTime.getTotalTime() << " " << inputLoadTime.getAverageTime() << " " << inputLoadTime.getStdDev() << " ";
+  output << dedispTime.getTotalTime() << " " << dedispTime.getAverageTime() << " " << dedispTime.getStdDev() << " ";
+  output << transTime.getTotalTime() << " " << transTime.getAverageTime() << " " << transTime.getStdDev() << " ";
+  output << foldTime.getTotalTime() << " " << foldTime.getAverageTime() << " " << foldTime.getStdDev() << " ";
+  output << snrTime.getTotalTime() << " " << snrTime.getAverageTime() << " " << snrTime.getStdDev() << " ";
+  output << outputStoreTime.getTotalTime() << " " << outputStoreTime.getAverageTime() << " " << outputStoreTime.getStdDev() << " ";
+  output << std::endl;
 
 	return 0;
 }
