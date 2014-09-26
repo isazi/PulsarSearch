@@ -102,7 +102,9 @@ int main(int argc, char * argv[]) {
     unsigned int tempUInts[3] = {args.getSwitchArgument< unsigned int >("-dm_node"), 0, 0};
     float tempFloats[2] = {args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step")};
     obs.setDMRange(tempUInts[0], tempFloats[0] + ((world.rank() / MPIRows) * tempUInts[0] * tempFloats[1]), tempFloats[1]);
-    tempUInts = {args.getSwitchArgument< unsigned int >("-period_node"), args.getSwitchArgument< unsigned int >("-period_first"), args.getSwitchArgument< unsigned int >("-period_step")};
+    tempUInts[0] = args.getSwitchArgument< unsigned int >("-period_node");
+    tempUInts[1] = args.getSwitchArgument< unsigned int >("-period_first");
+    tempUInst[2] = args.getSwitchArgument< unsigned int >("-period_step");
     obs.setPeriodRange(tempUInts[0], tempUInts[1] + ((world.rank() % MPICols) * tempUInts[0] * tempUInts[2]), tempUInts[2]);
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
