@@ -173,7 +173,7 @@ int main(int argc, char * argv[]) {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts->data()));
     // nrSamplesPerBin_d
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(nrSamplesPerBin_d, CL_TRUE, 0, nrSamplesPerBin->size() * sizeof(unsigned int), reinterpret_cast< void * >(nrSamplesPerBin->data()));
-    delete samplesPerBin;
+    delete nrSamplesPerBin;
     // foldedData_d
     std::vector< dataType > transferDataType(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
     std::fill(transferDataType.begin(), transferDataType.end(), 0);
@@ -257,7 +257,7 @@ int main(int argc, char * argv[]) {
   transposeK->setArg(1, transposedData_d);
   foldingK->setArg(1, transposedData_d);
   foldingK->setArg(2, foldedData_d);
-  foldingK->setArg(5, samplesPerBin_d);
+  foldingK->setArg(5, nrSamplesPerBin_d);
   snrK->setArg(0, foldedData_d);
   snrK->setArg(1, snrTable_d);
 
