@@ -45,6 +45,8 @@ int main(int argc, char * argv[]) {
 	bool dataSIGPROC = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
+  unsigned int MPIRows = 0;
+  unsigned int MPICols = 0;
 	unsigned int bytesToSkip = 0;
   unsigned int secondsToBuffer = 0;
   unsigned int remainingSamples = 0;
@@ -63,9 +65,9 @@ int main(int argc, char * argv[]) {
     isa::utils::ArgumentList args(argc, argv);
 
 		// Cols are associated with periods
-		unsigned int MPICols = args.getSwitchArgument< unsigned int >("-mpi_cols");
+		MPICols = args.getSwitchArgument< unsigned int >("-mpi_cols");
 		// Rows are associated with DMs
-		unsigned int MPIRows = args.getSwitchArgument< unsigned int >("-mpi_rows");
+		MPIRows = args.getSwitchArgument< unsigned int >("-mpi_rows");
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
 		deviceName = args.getSwitchArgument< std::string >("-device_name");
