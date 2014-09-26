@@ -43,8 +43,6 @@ PHI_LDFLAGS := -lm
 IMG_LDFLAGS := -lm -lX11
 
 CC := g++
-LINKER := g++
 INTELCXX := icc
 MPICXX := mpicxx
 
-UTILS_SRC := $(HOME)/src/utils/src/utils.cpp
