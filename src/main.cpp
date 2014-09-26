@@ -283,9 +283,9 @@ int main(int argc, char * argv[]) {
 		inputLoadTime.start();
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
 			for ( unsigned int chunk = 0; chunk < secondsToBuffer - 1; chunk++ ) {
-        memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), (input->at(second + chunk))[channel * obs.getNrSamplesPerPaddedSecond()], obs.getNrSamplesPerSecond() * sizeof(dataType));
+        memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + chunk))[channel * obs.getNrSamplesPerPaddedSecond()])), obs.getNrSamplesPerSecond() * sizeof(dataType));
 			}
-      memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + ((secondsToBuffer - 1) * obs.getNrSamplesPerSecond())])), (input->at(second + (secondsToBuffer - 1)))[channel * obs.getNrSamplesPerPaddedSecond()], remainingSamples * sizeof(dataType));
+      memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + ((secondsToBuffer - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + (secondsToBuffer - 1)))[channel * obs.getNrSamplesPerPaddedSecond()])), remainingSamples * sizeof(dataType));
 		}
     try {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
