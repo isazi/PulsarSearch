@@ -22,7 +22,7 @@
 #include <utils.hpp>
 
 
-void readPadding(map< std::string, unsigned int > & padding, const std::string & paddingFilename) {
+void readPadding(std::map< std::string, unsigned int > & padding, const std::string & paddingFilename) {
 	std::string temp;
 	std::ifstream paddingFile(paddingFilename);
 
@@ -38,7 +38,7 @@ void readPadding(map< std::string, unsigned int > & padding, const std::string &
 	}
 }
 
-void readVectorWidth(map< std::string, unsigned int > & vectorWidth, const std::string & vectorFilename) {
+void readVectorWidth(std::map< std::string, unsigned int > & vectorWidth, const std::string & vectorFilename) {
 	std::string temp;
 	std::ifstream vectorFile(vectorFilename);
 
@@ -54,7 +54,7 @@ void readVectorWidth(map< std::string, unsigned int > & vectorWidth, const std::
 	}
 }
 
-void readDedispersion(map< std::string, map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters, const std::string  & dedispersionFilename) {
+void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters, const std::string  & dedispersionFilename) {
 	std::string temp;
 	std::ifstream dedispersionFile(dedispersionFilename);
 
@@ -90,7 +90,7 @@ void readDedispersion(map< std::string, map< unsigned int, std::vector< unsigned
 		parameters[4] = isa::utils::castToType< std::string, unsigned int >(temp);
 
 		if ( dedispersionParameters.count(deviceName) == 0 ) {
-			map< unsigned int, std::vector< unsigned int > > container;
+      std::map< unsigned int, std::vector< unsigned int > > container;
 
 			container.insert(std::make_pair(nrDMs, parameters));
 			dedispersionParameters.insert(std::make_pair(deviceName, container));
@@ -100,7 +100,7 @@ void readDedispersion(map< std::string, map< unsigned int, std::vector< unsigned
 	}
 }
 
-void readTranspose(map< std::string, map< unsigned int, unsigned int > > & transposeParameters, const std::string & transposeFilename) {
+void readTranspose(std::map< std::string, std::map< unsigned int, unsigned int > > & transposeParameters, const std::string & transposeFilename) {
 	std::string temp;
 	std::ifstream transposeFile(transposeFilename);
 
@@ -124,7 +124,7 @@ void readTranspose(map< std::string, map< unsigned int, unsigned int > > & trans
 		parameter = isa::utils::castToType< std::string, unsigned int >(temp);
 
 		if ( transposeParameters.count(deviceName) == 0 ) {
-			map< unsigned int, unsigned int > container;
+      std::map< unsigned int, unsigned int > container;
 
 			container.insert(std::make_pair(nrDMs, parameter));
 			transposeParameters.insert(std::make_pair(deviceName, container));
@@ -134,7 +134,7 @@ void readTranspose(map< std::string, map< unsigned int, unsigned int > > & trans
 	}
 }
 
-void readFolding(map< std::string, map< unsigned int, map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const std::string & foldingFilename) {
+void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const std::string & foldingFilename) {
 	std::string temp;
 	std::ifstream foldingFile(foldingFilename);
 
@@ -180,14 +180,14 @@ void readFolding(map< std::string, map< unsigned int, map< unsigned int, std::ve
 		parameters[6] = isa::utils::castToType< std::string, unsigned int >(temp);
 
 		if ( foldingParameters.count(deviceName) == 0 ) {
-			map< unsigned int, map< unsigned int, std::vector< unsigned int > > > externalContainer;
-			map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > externalContainer;
+      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			externalContainer.insert(std::make_pair(nrDMs, internalContainer));
 			foldingParameters.insert(std::make_pair(deviceName, externalContainer));
 		} else if ( foldingParameters[deviceName].count(nrDMs) == 0 ) {
-			map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			foldingParameters[deviceName].insert(std::make_pair(nrDMs, internalContainer));
@@ -197,7 +197,7 @@ void readFolding(map< std::string, map< unsigned int, map< unsigned int, std::ve
 	}
 }
 
-void readSNR(map< std::string, map< unsigned int, map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const std::string & snrFilename) {
+void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const std::string & snrFilename) {
 	std::string temp;
 	std::ifstream snrFile(snrFilename);
 
@@ -234,14 +234,14 @@ void readSNR(map< std::string, map< unsigned int, map< unsigned int, std::vector
 		parameters[3] = isa::utils::castToType< std::string, unsigned int >(temp);
 
 		if ( snrParameters.count(deviceName) == 0 ) {
-			map< unsigned int, map< unsigned int, std::vector< unsigned int > > > externalContainer;
-			map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > externalContainer;
+      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			externalContainer.insert(std::make_pair(nrDMs, internalContainer));
 			snrParameters.insert(std::make_pair(deviceName, externalContainer));
 		} else if ( snrParameters[deviceName].count(nrDMs) == 0 ) {
-			map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			snrParameters[deviceName].insert(std::make_pair(nrDMs, internalContainer));
