@@ -370,6 +370,11 @@ int main(int argc, char * argv[]) {
   output << outputStoreTime.getTotalTime() << " " << outputStoreTime.getAverageTime() << " " << outputStoreTime.getStdDev() << " ";
   output << std::endl;
 
+  if ( DEBUG && world.rank() == 0 ) {
+    std::cout << "Output and statistics saved to disk." << std::endl;
+  }
+  world.barrier();
+
 	return 0;
 }
 
