@@ -27,78 +27,85 @@
 
 
 int main(int argc, char * argv[]) {
-		unsigned int nrDMs = 0;
-		unsigned int nrPeriods = 0;
-		float minSNR = std::numeric_limits< float >::max();
-		float maxSNR = std::numeric_limits< float >::min();
-		float snrSpaceDim = 0.0f;
-		float * snrSpace = 0;
-		std::string outFilename;
-		std::ifstream searchFile;
+  unsigned int nrDMs = 0;
+  unsigned int nrPeriods = 0;
+  float minSNR = std::numeric_limits< float >::max();
+  float maxSNR = std::numeric_limits< float >::min();
+  float snrSpaceDim = 0.0f;
+  float * snrSpace = 0;
+  std::string outFilename;
+  std::ifstream searchFile;
 
-		try {
-				isa::utils::ArgumentList args(argc, argv);
+  isa::utils::ArgumentList args(argc, argv);
+  try {
+    searchFile.open(args.getSwitchArgument< std::string >("-input"));
+    outFilename = args.getSwitchArgument< std::string >("-output");
+    nrDMs = args.getSwitchArgument< unsigned int >("-dms");
+    nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
+  } catch ( isa::utils::EmptyCommandLine & err ) {
+    std::cerr << args.getName() << " -output ... -dms ... -periods ... input" << std::endl;
+    return 1;
+  } catch ( std::exception & err ) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
 
-				searchFile.open(args.getSwitchArgument< std::string >("-input"));
-				outFilename = args.getSwitchArgument< std::string >("-output");
-				nrDMs = args.getSwitchArgument< unsigned int >("-dms");
-				nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
-		} catch ( isa::utils::EmptyCommandLine & err ) {
-				std::cerr << argv[0] << " -input ... -output ... -dms ... -periods ..." << std::endl;
-				return 1;
-		} catch ( std::exception & err ) {
-				std::cerr << err.what() << std::endl;
-				return 1;
-		}
+  snrSpace = new float [nrDMs * nrPeriods];
 
-		snrSpace = new float [nrDMs * nrPeriods];
-		while ( ! searchFile.eof() ) {
-				std::string temp;
-				unsigned int splitPoint = 0;
-				unsigned int DM = 0;
-				unsigned int period = 0;
-				float snr = 0.0f;
+  try {
+    while ( true ) {
+      searchFile.open(args.getFirst());
 
-				std::getline(searchFile, temp);
-				if ( ! std::isdigit(temp[0]) ) {
-						continue;
-				}
-				splitPoint = temp.find(" ");
-				period = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
-				temp = temp.substr(splitPoint + 1);
-				splitPoint = temp.find(" ");
-				temp = temp.substr(splitPoint + 1);
-				DM = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
-				temp = temp.substr(splitPoint + 1);
-				splitPoint = temp.find(" ");
-				temp = temp.substr(splitPoint + 1);
-				snr = isa::utils::castToType< std::string, float >(temp);
+      while ( ! searchFile.eof() ) {
+        std::string temp;
+        unsigned int splitPoint = 0;
+        unsigned int DM = 0;
+        unsigned int period = 0;
+        float snr = 0.0f;
 
-				if ( snr > maxSNR ) {
-						maxSNR = snr;
-				}
-				if ( snr < minSNR ) {
-						minSNR = snr;
-				}
+        std::getline(searchFile, temp);
+        if ( ! std::isdigit(temp[0]) ) {
+          continue;
+        }
+        splitPoint = temp.find(" ");
+        period = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+        temp = temp.substr(splitPoint + 1);
+        splitPoint = temp.find(" ");
+        temp = temp.substr(splitPoint + 1);
+        DM = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+        temp = temp.substr(splitPoint + 1);
+        splitPoint = temp.find(" ");
+        temp = temp.substr(splitPoint + 1);
+        snr = isa::utils::castToType< std::string, float >(temp);
 
-				snrSpace[(period * nrDMs) + DM] = snr;
-		}
-		searchFile.close();
-		snrSpaceDim = maxSNR - minSNR;
+        if ( snr > maxSNR ) {
+          maxSNR = snr;
+        }
+        if ( snr < minSNR ) {
+          minSNR = snr;
+        }
 
-		cimg_library::CImg< unsigned char > searchImage(nrDMs, nrPeriods, 1, 3);
-		AstroData::Color *colorMap = AstroData::getColorMap();
-		for ( unsigned int period = 0; period < nrPeriods; period++ ) {
-				for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
-						float snr = snrSpace[(period * nrDMs) + DM];
-						searchImage(DM, period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getR();
-						searchImage(DM, period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getG();
-						searchImage(DM, period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getB();
-				}
-		}
-		searchImage.save(outFilename.c_str());
+        snrSpace[(period * nrDMs) + DM] = snr;
+      }
+      searchFile.close();
+    }
+  } catch ( isa::utils::EmptyCommandLine & err ) {
+    snrSpaceDim = maxSNR - minSNR;
+  }
 
-		delete [] snrSpace;
-		return 0;
+  cimg_library::CImg< unsigned char > searchImage(nrDMs, nrPeriods, 1, 3);
+  AstroData::Color *colorMap = AstroData::getColorMap();
+  for ( unsigned int period = 0; period < nrPeriods; period++ ) {
+    for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
+      float snr = snrSpace[(period * nrDMs) + DM];
+      searchImage(DM, period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getR();
+      searchImage(DM, period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getG();
+      searchImage(DM, period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getB();
+    }
+  }
+  searchImage.save(outFilename.c_str());
+
+  delete [] snrSpace;
+  return 0;
 }
 
