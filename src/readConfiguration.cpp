@@ -67,7 +67,7 @@ void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector
 		}
 		std::string deviceName;
 		unsigned int nrDMs = 0;
-		std::vector< unsigned int > parameters(4);
+		std::vector< unsigned int > parameters(5);
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
@@ -148,7 +148,7 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 		std::string deviceName;
 		unsigned int nrDMs = 0;
 		unsigned int nrPeriods = 0;
-		std::vector< unsigned int > parameters(6);
+		std::vector< unsigned int > parameters(7);
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
@@ -211,7 +211,7 @@ void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned i
 		std::string deviceName;
 		unsigned int nrDMs = 0;
 		unsigned int nrPeriods = 0;
-		std::vector< unsigned int > parameters(2);
+		std::vector< unsigned int > parameters(4);
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
