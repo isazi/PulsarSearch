@@ -53,7 +53,7 @@ int main(int argc, char * argv[]) {
 
   try {
     while ( true ) {
-      searchFile.open(args.getFirst());
+      searchFile.open(args.getFirst< std::string >());
 
       while ( ! searchFile.eof() ) {
         std::string temp;
