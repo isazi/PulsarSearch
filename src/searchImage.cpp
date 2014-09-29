@@ -23,7 +23,6 @@
 #include <ArgumentList.hpp>
 #include <ColorMap.hpp>
 #include <utils.hpp>
-#include <Exceptions.hpp>
 
 
 int main(int argc, char * argv[]) {
