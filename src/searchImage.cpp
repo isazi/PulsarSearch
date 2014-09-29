@@ -37,7 +37,6 @@ int main(int argc, char * argv[]) {
 
   isa::utils::ArgumentList args(argc, argv);
   try {
-    searchFile.open(args.getSwitchArgument< std::string >("-input"));
     outFilename = args.getSwitchArgument< std::string >("-output");
     nrDMs = args.getSwitchArgument< unsigned int >("-dms");
     nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
