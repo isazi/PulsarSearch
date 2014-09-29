@@ -71,11 +71,9 @@ int main(int argc, char * argv[]) {
         period = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
         temp = temp.substr(splitPoint + 1);
         splitPoint = temp.find(" ");
-        temp = temp.substr(splitPoint + 1);
         DM = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
         temp = temp.substr(splitPoint + 1);
         splitPoint = temp.find(" ");
-        temp = temp.substr(splitPoint + 1);
         snr = isa::utils::castToType< std::string, float >(temp);
 
         if ( snr > maxSNR ) {
