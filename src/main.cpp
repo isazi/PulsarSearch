@@ -54,6 +54,7 @@ int main(int argc, char * argv[]) {
 	std::string dataFile;
 	std::string headerFile;
 	std::string outputFile;
+  isa::utils::ArgumentList args(argc, argv);
 	// Observation object
   AstroData::Observation obs;
 
@@ -62,8 +63,6 @@ int main(int argc, char * argv[]) {
   boost::mpi::communicator world;
 
 	try {
-    isa::utils::ArgumentList args(argc, argv);
-
 		// Cols are associated with periods
 		MPICols = args.getSwitchArgument< unsigned int >("-mpi_cols");
 		// Rows are associated with DMs
@@ -93,7 +92,7 @@ int main(int argc, char * argv[]) {
 			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
 			obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
-      obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-low_freq"), args.getSwitchArgument< float >("-channel_band"));
+      obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 		} else {
 			std::cerr << "Need to specify the -header and -data arguments." << std::endl;
@@ -110,8 +109,9 @@ int main(int argc, char * argv[]) {
     obs.setPeriodRange(tempUInts[0], tempUInts[1] + ((world.rank() % MPICols) * tempUInts[0] * tempUInts[2]), tempUInts[2]);
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    // TODO: usage string
-    std::cerr << std::endl;
+    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snr_file ... [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -pedio_first ... -period_step ... -period_bins ..."<< std::endl;
+    std::cerr << "\t -lofar -header ... -data ..." << std::endl;
+    std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
