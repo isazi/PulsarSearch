@@ -22,20 +22,15 @@
 #include <boost/mpi.hpp>
 
 #include <configuration.hpp>
-#include <readConfiguration.hpp>
 
 #include <ArgumentList.hpp>
 #include <utils.hpp>
 #include <Observation.hpp>
 #include <ReadData.hpp>
 #include <Timer.hpp>
-#include <InitializeOpenCL.hpp>
-#include <Kernel.hpp>
 
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
-#include <Transpose.hpp>
-#include <Bins.hpp>
 #include <Folding.hpp>
 #include <SNR.hpp>
 
