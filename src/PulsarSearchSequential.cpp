@@ -129,7 +129,7 @@ int main(int argc, char * argv[]) {
   std::vector< dataType > dedispersedData(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
   std::vector< dataType > foldedData(obs.getNrDMs() * obs.getNrPeriods() * obs.getNrPaddedBins());
   std::vector < unsigned int > counterData(obs.getNrDMs() * obs.getNrPeriods() * obs.getNrPaddedBins());
-  std::vector< float > snrTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
+  std::vector< float > snrTable(obs.getNrDMs() * obs.getNrPaddedPeriods());
 
 	// Search loop
   isa::utils::Timer searchTime;
