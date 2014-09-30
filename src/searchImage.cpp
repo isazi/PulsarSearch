@@ -94,9 +94,9 @@ int main(int argc, char * argv[]) {
   for ( unsigned int period = 0; period < nrPeriods; period++ ) {
     for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
       float snr = snrSpace[(period * nrDMs) + DM];
-      searchImage(DM, period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getR();
-      searchImage(DM, period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getG();
-      searchImage(DM, period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getB();
+      searchImage((nrDMs - 1) - DM, (nrPeriods - 1) - period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getR();
+      searchImage((nrDMs - 1) - DM, (nrPeriods - 1) -  period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getG();
+      searchImage((nrDMs - 1 ) - DM, (nrPeriods - 1) - period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getB();
     }
   }
   searchImage.save(outFilename.c_str());
