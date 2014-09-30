@@ -149,7 +149,7 @@ int main(int argc, char * argv[]) {
 	// Host memory allocation
   std::vector< unsigned int > * shifts = PulsarSearch::getShifts(obs);
   obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + (*shifts)[((obs.getNrDMs() - 1) * obs.getNrPaddedChannels())]);
-  secondsToBuffer = std::ceil(obs.getNrSamplesPerDispersedChannel() / static_cast< float >(obs.getNrSamplesPerSecond()));
+  secondsToBuffer = obs.getNrSamplesPerDispersedChannel() / obs.getNrSamplesPerSecond();
   remainingSamples = obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond();
   std::vector< unsigned int > * nrSamplesPerBin = PulsarSearch::getSamplesPerBin(obs);
   std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
@@ -293,17 +293,17 @@ int main(int argc, char * argv[]) {
 		std::cout << "Starting the search." << std::endl;
 		std::cout << "Processing seconds: ";
 	}
-	for ( unsigned int second = 0; second <= obs.getNrSeconds() - secondsToBuffer; second++ ) {
+	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
 		if ( DEBUG && world.rank() == 0 ) {
 			std::cout << second << " " << std::flush;
 		}
 		// Load the input
 		inputLoadTime.start();
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-			for ( unsigned int chunk = 0; chunk < secondsToBuffer - 1; chunk++ ) {
+			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
         memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(dataType));
 			}
-      memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + ((secondsToBuffer - 1) * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + (secondsToBuffer - 1)))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
+      memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
 		}
     try {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
