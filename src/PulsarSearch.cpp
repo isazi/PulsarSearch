@@ -382,7 +382,7 @@ int main(int argc, char * argv[]) {
   output << "# searchTime inputLoadTotal inputLoadAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err foldingTotal foldingAvg err snrTotal snrAvg err outputStoreTotal outputStoreAvg err" << std::endl;
   output << std::fixed << std::setprecision(6);
   output << searchTime.getTotalTime() << " ";
-  output << inputLoadTime.getTotalTime() << " " << inputLoadTime.getAverageTime() << " " << inputLoadTime.getStdDev() << " ";
+  output << inputLoadTime.getTotalTime() << " " << inputLoadTime.getAverageTime() << " " << inputLoadTime.getStandardDeviation() << " ";
   output << dedispTime.getTotalTime() << " " << dedispTime.getAverageTime() << " " << dedispTime.getStandardDeviation() << " ";
   output << transTime.getTotalTime() << " " << transTime.getAverageTime() << " " << transTime.getStandardDeviation() << " ";
   output << foldTime.getTotalTime() << " " << foldTime.getAverageTime() << " " << foldTime.getStandardDeviation() << " ";
