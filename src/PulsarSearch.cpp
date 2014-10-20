@@ -383,11 +383,11 @@ int main(int argc, char * argv[]) {
   output << std::fixed << std::setprecision(6);
   output << searchTime.getTotalTime() << " ";
   output << inputLoadTime.getTotalTime() << " " << inputLoadTime.getAverageTime() << " " << inputLoadTime.getStdDev() << " ";
-  output << dedispTime.getTotalTime() << " " << dedispTime.getAverageTime() << " " << dedispTime.getStdDev() << " ";
-  output << transTime.getTotalTime() << " " << transTime.getAverageTime() << " " << transTime.getStdDev() << " ";
-  output << foldTime.getTotalTime() << " " << foldTime.getAverageTime() << " " << foldTime.getStdDev() << " ";
-  output << snrTime.getTotalTime() << " " << snrTime.getAverageTime() << " " << snrTime.getStdDev() << " ";
-  output << outputStoreTime.getTotalTime() << " " << outputStoreTime.getAverageTime() << " " << outputStoreTime.getStdDev() << " ";
+  output << dedispTime.getTotalTime() << " " << dedispTime.getAverageTime() << " " << dedispTime.getStandardDeviation() << " ";
+  output << transTime.getTotalTime() << " " << transTime.getAverageTime() << " " << transTime.getStandardDeviation() << " ";
+  output << foldTime.getTotalTime() << " " << foldTime.getAverageTime() << " " << foldTime.getStandardDeviation() << " ";
+  output << snrTime.getTotalTime() << " " << snrTime.getAverageTime() << " " << snrTime.getStandardDeviation() << " ";
+  output << outputStoreTime.getTotalTime() << " " << outputStoreTime.getAverageTime() << " " << outputStoreTime.getStandardDeviation() << " ";
   output << std::endl;
 
   if ( DEBUG && world.rank() == 0 ) {
