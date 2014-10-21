@@ -247,7 +247,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Dedispersion global: " << obs.getNrSamplesPerPaddedSecond() / dedispersionParameters[deviceName][obs.getNrDMs()][3] << ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()][3] << std::endl;
     std::cout << "Dedispersion local: " << dedispersionParameters[deviceName][obs.getNrDMs()][1] << ", " << dedispersionParameters[deviceName][obs.getNrDMs()][2] << std::endl;
   }
-  cl::NDRange transposeGlobal(obs.getNrSamplesPerPaddedSecond(), std::ceil(static_cast< double >(obs.getNrDMs()) / transposeParameters[deviceName][obs.getNrDMs()]));
+  cl::NDRange transposeGlobal(obs.getNrSamplesPerPaddedSecond(), static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrDMs()) / transposeParameters[deviceName][obs.getNrDMs()])));
   cl::NDRange transposeLocal(transposeParameters[deviceName][obs.getNrDMs()], 1);
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Transpose global: " << obs.getNrSamplesPerPaddedSecond() << ", " << std::ceil(static_cast< double >(obs.getNrDMs()) / transposeParameters[deviceName][obs.getNrDMs()]) << std::endl;
