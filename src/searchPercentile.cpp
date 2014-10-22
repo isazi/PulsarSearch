@@ -94,13 +94,15 @@ int main(int argc, char * argv[]) {
   unsigned int lowerLimit = (percentile * snrList.size()) / 100;
   unsigned int counter = snrList.size() - 1;
   outFile.open(outFilename);
-  outFile << std::fixed << std::setprecision(6);
+  outFile << std::fixed;
   outFile << "# DMIndex DM periodIndex period snr" << std::endl;
   for ( std::multimap< float, std::pair< unsigned int, unsigned int> >::const_reverse_iterator item = snrList.crend(); counter >= lowerLimit; counter-- ) {
+  ++item;
+  outFile << std::setprecision(2);
   outFile << (*item).second.first << " " << firstDM + ((*item).second.first * stepDM) << " ";
+  outFile << std::setprecision(6);
   outFile << (*item).second.second << " " << (firstPeriod + ((*item).second.second * stepPeriod)) / static_cast< float >(nrSamplesPerSecond) << " ";
   outFile << (*item).first << std::endl;
-  ++item;
   }
   outFile.close();
 
