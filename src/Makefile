@@ -14,7 +14,7 @@ SearchImage: searchImage.cpp
 	$(INTELCXX) -o $(PROJ_BASE)/bin/SearchImage searchImage.cpp $(IMG_INCLUDES) $(CFLAGS) $(IMG_LDFLAGS)
 
 SearchPercentile: searchPercentile.cpp
-	$(INTELCXX) -o $(PROJ_BASE)/bin/SearchPercentile searchPercentile.cpp $(CPU_INCLUDES) $(CFLAGS) $(LDFLAGS)
+	$(INTELCXX) -o $(PROJ_BASE)/bin/SearchPercentile searchPercentile.cpp $(CPU_INCLUDES) $(CFLAGS) $(CPU_LDFLAGS)
 
 clean:
 	rm -f $(PROJ_BASE)/bin/PulsarSearch
