@@ -100,6 +100,7 @@ int main(int argc, char * argv[]) {
   outFile << (*item).second.first << " " << firstDM + ((*item).second.first * stepDM) << " ";
   outFile << (*item).second.second << " " << (firstPeriod + ((*item).second.second * stepPeriod)) / static_cast< float >(nrSamplesPerSecond) << " ";
   outFile << (*item).first << std::endl;
+  ++item;
   }
   outFile.close();
 
