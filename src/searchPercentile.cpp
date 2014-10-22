@@ -96,7 +96,7 @@ int main(int argc, char * argv[]) {
   outFile.open(outFilename);
   outFile << std::fixed << std::setprecision(6);
   outFile << "# DMIndex DM periodIndex period snr" << std::endl;
-  for ( std::multimap< float, std::pair< unsigned int, unsigned int> >::const_iterator item = snrList.crend(); counter >= lowerLimit; counter-- ) {
+  for ( std::multimap< float, std::pair< unsigned int, unsigned int> >::const_reverse_iterator item = snrList.crend(); counter >= lowerLimit; counter-- ) {
   outFile << (*item).second.first << " " << firstDM + ((*item).second.first * stepDM) << " ";
   outFile << (*item).second.second << " " << (firstPeriod + ((*item).second.second * stepPeriod)) / static_cast< float >(nrSamplesPerSecond) << " ";
   outFile << (*item).first << std::endl;
