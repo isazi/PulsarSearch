@@ -17,6 +17,8 @@
 #include <exception>
 #include <string>
 #include <utility>
+#include <map>
+#include <iomanip>
 
 #include <ArgumentList.hpp>
 #include <utils.hpp>
