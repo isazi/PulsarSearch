@@ -386,7 +386,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
       output << "# " << dm << " " << period << std::endl;
       for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
-        output << bin << std::endl;
+        output << bin << " " << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << std::endl;
       }
       output << std::endl << std:: endl;
     }
