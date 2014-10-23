@@ -153,6 +153,7 @@ int main(int argc, char * argv[]) {
   remainingSamples = obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond();
   std::vector< unsigned int > * nrSamplesPerBin = PulsarSearch::getSamplesPerBin(obs);
   std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
+  std::vector< dataType > foldedData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
   std::vector< float > snrTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
 
   // Device memory allocation and data transfers
@@ -357,6 +358,7 @@ int main(int argc, char * argv[]) {
     snrTime.stop();
     outputStoreTime.start();
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrTable_d, CL_TRUE, 0, snrTable.size() * sizeof(float), reinterpret_cast< void * >(snrTable.data()));
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
     outputStoreTime.stop();
   } catch ( cl::Error & err ) {
 		std::cerr << err.what() << std::endl;
@@ -378,6 +380,18 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	output.close();
+  output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold");
+  output << std::fixed << std::setprecision(6);
+  for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+    for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
+      output << "# " << dm << " " << period << std::endl;
+      for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
+        output << bin << std::endl;
+      }
+      output << std::endl << std:: endl;
+    }
+  }
+  output.close();
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stat");
   output << "# searchTime inputLoadTotal inputLoadAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err foldingTotal foldingAvg err snrTotal snrAvg err outputStoreTotal outputStoreAvg err" << std::endl;
   output << std::fixed << std::setprecision(6);
