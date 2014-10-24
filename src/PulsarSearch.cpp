@@ -130,6 +130,10 @@ int main(int argc, char * argv[]) {
 	}
 	loadTime.stop();
 	if ( DEBUG && world.rank() == 0 ) {
+    std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
+    std::cout << "Samples: " << obs.getNrSamplesPerSecond() << std::endl;
+    std::cout << "Frequency range: " << obs.getMinFreq() << " " << obs.getMaxFreq() << std::endl;
+    std::cout << "Channels: " << obs.getNrChannels() << " " << obs.getChannelBandwidth() << std::endl;
 		std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
 	}
 
@@ -291,7 +295,6 @@ int main(int argc, char * argv[]) {
   world.barrier();
   searchTime.start();
 	if ( DEBUG && world.rank() == 0 ) {
-		std::cout << "Starting the search." << std::endl;
 		std::cout << "Processing seconds: ";
 	}
 	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
