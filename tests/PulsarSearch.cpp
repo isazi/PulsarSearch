@@ -105,7 +105,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Load observation data
-	std::vector< std::vector< dataType > * > * input = new std::vector< std::vector< dataType > * >(1);
+	std::vector< std::vector< dataType > * > * input = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
   AstroData::generatePulsar(period, width, DM, obs, *input, random);
 	if ( world.rank() == 0 ) {
     std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
