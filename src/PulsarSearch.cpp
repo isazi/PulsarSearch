@@ -406,6 +406,7 @@ int main(int argc, char * argv[]) {
   output << snrTime.getTotalTime() << " " << snrTime.getAverageTime() << " " << snrTime.getStandardDeviation() << " ";
   output << outputStoreTime.getTotalTime() << " " << outputStoreTime.getAverageTime() << " " << outputStoreTime.getStandardDeviation() << " ";
   output << std::endl;
+  outputFile.close();
 
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Output and statistics saved to disk." << std::endl;
