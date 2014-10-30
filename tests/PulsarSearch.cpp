@@ -27,7 +27,7 @@
 #include <ArgumentList.hpp>
 #include <utils.hpp>
 #include <Observation.hpp>
-#include <Generate.hpp>
+#include <Generator.hpp>
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
 
