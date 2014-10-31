@@ -344,7 +344,7 @@ int main(int argc, char * argv[]) {
   output << std::fixed << std::setprecision(6);
   for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
     for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
-      output << "# " << dm << " " << period << std::endl;
+      output << "# DM: " << dm << " period: " << period << std::endl;
       for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
         output << bin << " " << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << std::endl;
       }
