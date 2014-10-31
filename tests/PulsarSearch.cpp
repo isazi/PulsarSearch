@@ -302,6 +302,7 @@ int main(int argc, char * argv[]) {
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*foldingK, cl::NullRange, foldingGlobal, foldingLocal, 0, &syncPoint);
       syncPoint.wait();
       // Save the folded output every second
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
       output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold" + isa::utils::toString(second));
       output << "# bin SNR" << std::endl;
       output << std::fixed << std::setprecision(6);
@@ -333,7 +334,6 @@ int main(int argc, char * argv[]) {
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrK, cl::NullRange, snrGlobal, snrLocal, 0, &syncPoint);
     syncPoint.wait();
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrTable_d, CL_TRUE, 0, snrTable.size() * sizeof(float), reinterpret_cast< void * >(snrTable.data()));
-    clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
   } catch ( cl::Error & err ) {
 		std::cerr << err.what() << std::endl;
 		return 1;
