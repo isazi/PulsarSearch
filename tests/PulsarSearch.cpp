@@ -340,6 +340,7 @@ int main(int argc, char * argv[]) {
 	}
 	output.close();
   output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold");
+  output << "# bin SNR" << std::endl;
   output << std::fixed << std::setprecision(6);
   for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
     for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
