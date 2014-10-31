@@ -135,6 +135,8 @@ int main(int argc, char * argv[]) {
   remainingSamples = obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond();
   std::vector< unsigned int > * nrSamplesPerBin = PulsarSearch::getSamplesPerBin(obs);
   std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
+  std::vector< dataType > dedispersedData(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
+  std::vector< dataType > transposedData(obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs());
   std::vector< dataType > foldedData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
   std::vector< float > snrTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
 
@@ -170,24 +172,6 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-
-	if ( world.rank() == 0 ) {
-		double hostMemory = 0.0;
-		double deviceMemory = 0.0;
-
-    hostMemory += dispersedData.size() * sizeof(dataType);
-    hostMemory += snrTable.size() * sizeof(float);
-    deviceMemory += hostMemory;
-    deviceMemory += shifts->size() * sizeof(unsigned int);
-    deviceMemory += obs.getNrPeriods() * obs.getNrBins() * isa::utils::pad(2, obs.getPadding()) * sizeof(unsigned int);
-    deviceMemory += obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
-    deviceMemory += obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs() * sizeof(dataType);
-    deviceMemory += obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(dataType);
-    deviceMemory += obs.getNrBins() * obs.getNrPaddedPeriods() * 2 * sizeof(unsigned int);
-
-		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
-		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
-	}
 
 	// Generate OpenCL kernels
   std::string * code;
@@ -289,8 +273,10 @@ int main(int argc, char * argv[]) {
 		try {
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
       syncPoint.wait();
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*transposeK, cl::NullRange, transposeGlobal, transposeLocal, 0, &syncPoint);
       syncPoint.wait();
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(transposedData_d, CL_TRUE, 0, transposedData.size() * sizeof(dataType), reinterpret_cast< void * >(transposedData.data()));
       foldingK->setArg(0, second);
 			if ( second % 2 == 0 ) {
         foldingK->setArg(3, counterData0_d);
@@ -301,21 +287,8 @@ int main(int argc, char * argv[]) {
 			}
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*foldingK, cl::NullRange, foldingGlobal, foldingLocal, 0, &syncPoint);
       syncPoint.wait();
-      // Save the folded output every second
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
       output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold" + isa::utils::toString(second));
-      output << "# bin SNR" << std::endl;
-      output << std::fixed << std::setprecision(6);
-      for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-        for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
-          output << "# DM: " << dm << " period: " << period << std::endl;
-          for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
-            output << bin << " " << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << std::endl;
-          }
-          output << std::endl << std:: endl;
-        }
-      }
-      output.close();
 		} catch ( cl::Error & err ) {
 			std::cerr << err.what() << std::endl;
 			return 1;
