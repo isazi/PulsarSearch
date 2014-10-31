@@ -49,6 +49,7 @@ int main(int argc, char * argv[]) {
   unsigned int remainingSamples = 0;
 	std::string deviceName;
 	std::string outputFile;
+	std::ofstream output;
   isa::utils::ArgumentList args(argc, argv);
 	// Observation object
   AstroData::Observation obs;
@@ -300,6 +301,20 @@ int main(int argc, char * argv[]) {
 			}
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*foldingK, cl::NullRange, foldingGlobal, foldingLocal, 0, &syncPoint);
       syncPoint.wait();
+      // Save the folded output every second
+      output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold" + isa::utils::toString(second));
+      output << "# bin SNR" << std::endl;
+      output << std::fixed << std::setprecision(6);
+      for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+        for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
+          output << "# DM: " << dm << " period: " << period << std::endl;
+          for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
+            output << bin << " " << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << std::endl;
+          }
+          output << std::endl << std:: endl;
+        }
+      }
+      output.close();
 		} catch ( cl::Error & err ) {
 			std::cerr << err.what() << std::endl;
 			return 1;
@@ -327,7 +342,6 @@ int main(int argc, char * argv[]) {
 	if ( world.rank() == 0 ) {
 		std::cout << "Saving output to disk." << std::endl;
 	}
-	std::ofstream output;
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dat");
   output << "# period DM SNR" << std::endl;
   output << std::fixed << std::setprecision(6);
@@ -339,19 +353,6 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	output.close();
-  output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold");
-  output << "# bin SNR" << std::endl;
-  output << std::fixed << std::setprecision(6);
-  for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-    for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
-      output << "# DM: " << dm << " period: " << period << std::endl;
-      for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
-        output << bin << " " << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << std::endl;
-      }
-      output << std::endl << std:: endl;
-    }
-  }
-  output.close();
 
   if ( world.rank() == 0 ) {
     std::cout << "Output saved to disk." << std::endl;
