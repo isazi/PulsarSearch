@@ -386,6 +386,7 @@ int main(int argc, char * argv[]) {
 	}
   output.close();
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dedi.dat");
+  output << "# DM SNR" << std::endl;
   for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
     output << dm << " " << snrDedispersedTable[dm] << std::endl;
   }
