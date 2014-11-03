@@ -40,6 +40,7 @@
 
 
 int main(int argc, char * argv[]) {
+  bool print = false;
   bool random = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
@@ -78,6 +79,7 @@ int main(int argc, char * argv[]) {
 		readFolding(foldingParameters, args.getSwitchArgument< std::string >("-folding_file"));
 		readSNR(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
+    print = args.getSwitch("-print");
     random = args.getSwitch("-random");
 		obs.setPadding(padding[deviceName]);
 
@@ -98,7 +100,7 @@ int main(int argc, char * argv[]) {
     obs.setPeriodRange(tempUInts[0], tempUInts[1] + ((world.rank() % MPICols) * tempUInts[0] * tempUInts[2]), tempUInts[2]);
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snr_file ... [-random] -period ... -width ... -dm ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
+    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snr_file ... [-print] [-random] -period ... -width ... -dm ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
     return 1;
   } catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -248,13 +250,7 @@ int main(int argc, char * argv[]) {
   cl::Event syncPoint;
 
   world.barrier();
-	if ( world.rank() == 0 ) {
-		std::cout << "Processing seconds: ";
-	}
 	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
-		if ( world.rank() == 0 ) {
-			std::cout << second << " " << std::flush;
-		}
 		// Load the input
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
 			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
@@ -264,6 +260,17 @@ int main(int argc, char * argv[]) {
 		}
     try {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
+      if ( print && world.rank() == 0 ) {
+        std::cout << std::fixed << std::setprecision(3);
+        for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+          std::cout << channel << " : ";
+          for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
+            std::cout << dispersedData[(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+          }
+          std::cout << std::endl;
+        }
+        std::cout << std::endl;
+      }
     } catch ( cl::Error & err ) {
       std::cerr << err.what() << std::endl;
       return 1;
@@ -274,9 +281,31 @@ int main(int argc, char * argv[]) {
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
       syncPoint.wait();
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
+      if ( print && world.rank() == 0 ) {
+        std::cout << std::fixed << std::setprecision(3);
+        for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+          std::cout << dm << " : ";
+          for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
+            std::cout << dedispersedData[(dm * obs.getNrSamplesPerPaddedSecond()) + sample] << " ";
+          }
+          std::cout << std::endl;
+        }
+        std::cout << std::endl;
+      }
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*transposeK, cl::NullRange, transposeGlobal, transposeLocal, 0, &syncPoint);
       syncPoint.wait();
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(transposedData_d, CL_TRUE, 0, transposedData.size() * sizeof(dataType), reinterpret_cast< void * >(transposedData.data()));
+      if ( print && world.rank() == 0 ) {
+        std::cout << std::fixed << std::setprecision(3);
+        for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
+          std::cout << sample << " : ";
+          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+            std::cout << transposedData[(sample * obs.getNrPaddedDMs()) + dm] << " ";
+          }
+          std::cout << std::endl;
+        }
+        std::cout << std::endl;
+      }
       foldingK->setArg(0, second);
 			if ( second % 2 == 0 ) {
         foldingK->setArg(3, counterData0_d);
@@ -288,20 +317,27 @@ int main(int argc, char * argv[]) {
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*foldingK, cl::NullRange, foldingGlobal, foldingLocal, 0, &syncPoint);
       syncPoint.wait();
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
+      if ( print && world.rank() == 0 ) {
+        std::cout << std::fixed << std::setprecision(3);
+        for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+          for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
+            std::cout << dm << " " << period << " : ";
+            for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
+              std::cout << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << " ";
+            }
+            std::cout << std::endl;
+          }
+          std::cout << std::endl;
+        }
+        std::cout << std::endl;
+      }
 		} catch ( cl::Error & err ) {
 			std::cerr << err.what() << std::endl;
 			return 1;
 		}
 	}
-	if ( world.rank() == 0 ) {
-		std::cout << "." << std::endl;
-		std::cout << "Search complete." << std::endl;
-	}
 
 	// Store output
-	if ( world.rank() == 0 ) {
-		std::cout << "Analyzing processed data." << std::endl;
-	}
 	try {
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrK, cl::NullRange, snrGlobal, snrLocal, 0, &syncPoint);
     syncPoint.wait();
@@ -311,9 +347,6 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	if ( world.rank() == 0 ) {
-		std::cout << "Saving output to disk." << std::endl;
-	}
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dat");
   output << "# period DM SNR" << std::endl;
   output << std::fixed << std::setprecision(6);
@@ -326,9 +359,6 @@ int main(int argc, char * argv[]) {
 	}
 	output.close();
 
-  if ( world.rank() == 0 ) {
-    std::cout << "Output saved to disk." << std::endl;
-  }
   world.barrier();
 
 	return 0;
