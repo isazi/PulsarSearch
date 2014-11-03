@@ -369,7 +369,7 @@ int main(int argc, char * argv[]) {
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrFoldedK, cl::NullRange, snrFoldedGlobal, snrFoldedLocal, 0, &syncPoint);
     syncPoint.wait();
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrFoldedTable_d, CL_TRUE, 0, snrFoldedTable.size() * sizeof(float), reinterpret_cast< void * >(snrFoldedTable.data()));
-  Computing the SNR of dedispersed time series, and producing it as output.} catch ( cl::Error & err ) {
+  } catch ( cl::Error & err ) {
 		std::cerr << err.what() << std::endl;
 		return 1;
 	}
