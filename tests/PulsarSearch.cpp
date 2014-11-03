@@ -331,7 +331,7 @@ int main(int argc, char * argv[]) {
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
           std::cout << snrDedispersedTable[dm] << " ";
         }
-        std::cout << std::endl;
+        std::cout << std::endl << std::endl;
       }
       foldingK->setArg(0, second);
 			if ( second % 2 == 0 ) {
