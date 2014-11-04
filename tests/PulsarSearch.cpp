@@ -19,6 +19,7 @@
 #include <vector>
 #include <iomanip>
 #include <algorithm>
+#include <cmath>
 #include <boost/mpi.hpp>
 
 #include <configuration.hpp>
@@ -140,11 +141,13 @@ int main(int argc, char * argv[]) {
   std::vector< dataType > dedispersedData(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
   std::vector< dataType > transposedData(obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs());
   std::vector< dataType > foldedData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
-  std::vector< float > snrDedispersedTable(obs.getNrPaddedDMs());
+  std::vector< dataType > maxDedispersedTable(obs.getNrPaddedDMs());
+  std::vector< float > meanDedispersedTable(obs.getNrPaddedDMs());
+  std::vector< float > rmsDedispersedTable(obs.getNrPaddedDMs());
   std::vector< float > snrFoldedTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
 
   // Device memory allocation and data transfers
-  cl::Buffer shifts_d, nrSamplesPerBin_d, dispersedData_d, dedispersedData_d, transposedData_d, foldedData_d, counterData0_d, counterData1_d, snrDedispersedTable_d, snrFoldedTable_d;
+  cl::Buffer shifts_d, nrSamplesPerBin_d, dispersedData_d, dedispersedData_d, transposedData_d, foldedData_d, counterData0_d, counterData1_d, maxDedispersedTable_d, meanDedispersedTable_d, rmsDedispersedTable_d, snrFoldedTable_d;
 
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(unsigned int), 0, 0);
@@ -155,7 +158,9 @@ int main(int argc, char * argv[]) {
     foldedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
     counterData0_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPaddedPeriods() * sizeof(unsigned int), 0, 0);
     counterData1_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPaddedPeriods() * sizeof(unsigned int), 0, 0);
-    snrDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
+    maxDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
+    meanDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
+    rmsDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
     snrFoldedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(float), 0, 0);
 
     // shifts_d
@@ -163,6 +168,13 @@ int main(int argc, char * argv[]) {
     // nrSamplesPerBin_d
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(nrSamplesPerBin_d, CL_TRUE, 0, nrSamplesPerBin->size() * sizeof(unsigned int), reinterpret_cast< void * >(nrSamplesPerBin->data()));
     delete nrSamplesPerBin;
+    // maxDedispersedTable_d, meanDedispersedTable_d, rmsDedispersedTable_d
+    std::fill(maxDedispersedTable.begin(), maxDedispersedTable.end(), 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
+    std::fill(meanDedispersedTable.begin(), meanDedispersedTable.end(), 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
+    std::fill(rmsDedispersedTable.begin(), rmsDedispersedTable.end(), 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
     // foldedData_d
     std::vector< dataType > transferDataType(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
     std::fill(transferDataType.begin(), transferDataType.end(), 0);
@@ -258,8 +270,10 @@ int main(int argc, char * argv[]) {
   foldingK->setArg(1, transposedData_d);
   foldingK->setArg(2, foldedData_d);
   foldingK->setArg(5, nrSamplesPerBin_d);
-  snrDedispersedK->setArg(0, transposedData_d);
-  snrDedispersedK->setArg(1, snrDedispersedTable_d);
+  snrDedispersedK->setArg(1, transposedData_d);
+  snrDedispersedK->setArg(2, maxDedispersedTable_d);
+  snrDedispersedK->setArg(3, meanDedispersedTable_d);
+  snrDedispersedK->setArg(4, rmsDedispersedTable_d);
   snrFoldedK->setArg(0, foldedData_d);
   snrFoldedK->setArg(1, snrFoldedTable_d);
 
@@ -323,13 +337,16 @@ int main(int argc, char * argv[]) {
         }
         std::cout << std::endl;
       }
+      snrDedispersedK->setArg(0, static_cast< float >(second));
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDedispersedK, cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal, 0, &syncPoint);
       syncPoint.wait();
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrDedispersedTable_d, CL_TRUE, 0, snrDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(snrDedispersedTable.data()));
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
+      clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
       if ( print && world.rank() == 0 ) {
         std::cout << std::fixed << std::setprecision(6);
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-          std::cout << snrDedispersedTable[dm] << " ";
+          std::cout << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << " ";
         }
         std::cout << std::endl << std::endl;
       }
@@ -388,7 +405,7 @@ int main(int argc, char * argv[]) {
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dedi.dat");
   output << "# DM SNR" << std::endl;
   for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-    output << dm << " " << snrDedispersedTable[dm] << std::endl;
+    output << dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
   }
 	output.close();
 
