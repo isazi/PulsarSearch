@@ -116,6 +116,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Samples: " << obs.getNrSamplesPerSecond() << std::endl;
     std::cout << "Frequency range: " << obs.getMinFreq() << " " << obs.getMaxFreq() << std::endl;
     std::cout << "Channels: " << obs.getNrChannels() << " " << obs.getChannelBandwidth() << std::endl;
+    std::cout << std::endl;
 	}
 
 	// Initialize OpenCL
