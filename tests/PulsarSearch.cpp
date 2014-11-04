@@ -347,7 +347,7 @@ int main(int argc, char * argv[]) {
       if ( print && world.rank() == 0 ) {
         std::cout << std::fixed << std::setprecision(6);
         for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-          std::cout << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << " ";
+          std::cout << dm << ": " << maxDedispersedTable[dm] << " " << meanDedispersedTable[dm] << " " << std::sqrt(rmsDedispersedTable[dm]) << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << " ";
         }
         std::cout << std::endl << std::endl;
       }
