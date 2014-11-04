@@ -249,11 +249,11 @@ int main(int argc, char * argv[]) {
     std::cout << "Folding global: " << obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << ", " << obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4] << ", " << obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5] << std::endl;
     std::cout << "Folding local: " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << std::endl;
   }
-  cl::NDRange snrDedispersedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3]);
-  cl::NDRange snrDedispersedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
+  cl::NDRange snrDedispersedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
+  cl::NDRange snrDedispersedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0]);
   if ( world.rank() == 0 ) {
-    std::cout << "SNRDedispersed global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << ", " << obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << std::endl;
-    std::cout << "SNRDedispersed local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << std::endl;
+    std::cout << "SNRDedispersed global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << std::endl;
+    std::cout << "SNRDedispersed local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << std::endl;
   }
   cl::NDRange snrFoldedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3]);
   cl::NDRange snrFoldedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
