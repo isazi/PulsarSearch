@@ -238,10 +238,10 @@ int main(int argc, char * argv[]) {
     std::cout << "Dedispersion global: " << obs.getNrSamplesPerPaddedSecond() / dedispersionParameters[deviceName][obs.getNrDMs()][3] << ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()][3] << std::endl;
     std::cout << "Dedispersion local: " << dedispersionParameters[deviceName][obs.getNrDMs()][1] << ", " << dedispersionParameters[deviceName][obs.getNrDMs()][2] << std::endl;
   }
-  cl::NDRange transposeGlobal(obs.getNrSamplesPerPaddedSecond(), static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrDMs()) / transposeParameters[deviceName][obs.getNrDMs()])));
+  cl::NDRange transposeGlobal(obs.getNrPaddedDMs(), static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])));
   cl::NDRange transposeLocal(transposeParameters[deviceName][obs.getNrDMs()], 1);
   if ( world.rank() == 0 ) {
-    std::cout << "Transpose global: " << obs.getNrSamplesPerPaddedSecond() << ", " << static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrDMs()) / transposeParameters[deviceName][obs.getNrDMs()])) << std::endl;
+    std::cout << "Transpose global: " << obs.getNrPaddedDMs() << ", " << static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])) << std::endl;
     std::cout << "Transpose local: " << transposeParameters[deviceName][obs.getNrDMs()] << ", 1" << std::endl;
   }
   cl::NDRange foldingGlobal(obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4], obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5]);
