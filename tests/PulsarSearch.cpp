@@ -119,7 +119,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
     std::cout << "Samples: " << obs.getNrSamplesPerSecond() << std::endl;
     std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
-    std::cout << "Channels: " << obs.getNrChannels() << " " << obs.getChannelBandwidth() << " MHz" << std::endl;
+    std::cout << "Channels: " << obs.getNrChannels() << " (" << obs.getChannelBandwidth() << " MHz)" << std::endl;
     std::cout << std::endl;
 	}
 
