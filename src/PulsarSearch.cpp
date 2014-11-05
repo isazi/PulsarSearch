@@ -130,11 +130,17 @@ int main(int argc, char * argv[]) {
 	}
 	loadTime.stop();
 	if ( DEBUG && world.rank() == 0 ) {
+    std::cout << "Device: " << deviceName << std::endl;
+    std::cout << "Padding: " << padding[deviceName] << std::endl;
+    std::cout << "Vector: " << vectorWidth[deviceName] << std::endl;
+    std::cout << std::endl;
     std::cout << "Seconds: " << obs.getNrSeconds() << std::endl;
     std::cout << "Samples: " << obs.getNrSamplesPerSecond() << std::endl;
-    std::cout << "Frequency range: " << obs.getMinFreq() << " " << obs.getMaxFreq() << std::endl;
-    std::cout << "Channels: " << obs.getNrChannels() << " " << obs.getChannelBandwidth() << std::endl;
+    std::cout << "Frequency range: " << obs.getMinFreq() << " MHz, " << obs.getMaxFreq() << " MHz" << std::endl;
+    std::cout << "Channels: " << obs.getNrChannels() << " (" << obs.getChannelBandwidth() << " MHz)" << std::endl;
+    std::cout << std::endl;
 		std::cout << "Time to load the input: " << std::fixed << std::setprecision(6) << loadTime.getTotalTime() << " seconds." << std::endl;
+    std::cout << std::endl;
 	}
 
 	// Initialize OpenCL
