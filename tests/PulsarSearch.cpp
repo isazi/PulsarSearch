@@ -163,9 +163,9 @@ int main(int argc, char * argv[]) {
     foldedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
     counterData0_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPaddedPeriods() * sizeof(unsigned int), 0, 0);
     counterData1_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPaddedPeriods() * sizeof(unsigned int), 0, 0);
-    maxDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
-    meanDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
-    rmsDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
+    maxDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
+    meanDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
+    rmsDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
     snrFoldedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(float), 0, 0);
 
     // shifts_d
