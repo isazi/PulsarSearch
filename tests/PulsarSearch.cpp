@@ -286,7 +286,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int i = 0; i < snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].size(); i++ ) {
       std::cout << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
   }
 
   dedispersionK->setArg(0, dispersedData_d);
