@@ -402,7 +402,7 @@ int main(int argc, char * argv[]) {
 	}
 	std::ofstream output;
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dat");
-  output << "# period DM SNR" << std::endl;
+  output << "# periodIndex DMIndex SNR" << std::endl;
   output << std::fixed << std::setprecision(6);
 	for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
 		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -414,6 +414,7 @@ int main(int argc, char * argv[]) {
 	output.close();
   output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold");
   output << std::fixed << std::setprecision(6);
+  output << "# bin SNR" << std::endl;
   for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
     for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
       output << "# " << dm << " " << period << std::endl;
@@ -425,7 +426,7 @@ int main(int argc, char * argv[]) {
   }
   output.close();
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dedi");
-  output << "# DM SNR" << std::endl;
+  output << "# DMIndex SNR" << std::endl;
   for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
     output << ((world.rank() / MPIRows) * obs.getNrDMs()) + dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
   }
