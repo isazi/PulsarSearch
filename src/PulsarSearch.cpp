@@ -184,7 +184,7 @@ int main(int argc, char * argv[]) {
     maxDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
     meanDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
     rmsDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
-    snrTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(float), 0, 0);
+    snrFoldedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(float), 0, 0);
 
     // shifts_d
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_TRUE, 0, shifts->size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts->data()));
@@ -221,7 +221,7 @@ int main(int argc, char * argv[]) {
     hostMemory += maxDedispersedTable.size() * sizeof(dataType);
     hostMemory += meanDedispersedTable.size() * sizeof(float);
     hostMemory += rmsDedispersedTable.size() * sizeof(float);
-    hostMemory += snrTable.size() * sizeof(float);
+    hostMemory += snrFoldedTable.size() * sizeof(float);
     deviceMemory += hostMemory;
     deviceMemory += shifts->size() * sizeof(unsigned int);
     deviceMemory += obs.getNrPeriods() * obs.getNrBins() * isa::utils::pad(2, obs.getPadding()) * sizeof(unsigned int);
@@ -381,15 +381,15 @@ int main(int argc, char * argv[]) {
 		std::cout << "Analyzing processed data." << std::endl;
 	}
 	try {
-    snrTime.start();
+    snrFoldedTime.start();
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrFoldedK, cl::NullRange, snrFoldedGlobal, snrFoldedLocal, 0, &syncPoint);
     syncPoint.wait();
-    snrTime.stop();
+    snrFoldedTime.stop();
     outputStoreTime.start();
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
-    clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrFoldedTable_d, CL_TRUE, 0, snrTable.size() * sizeof(float), reinterpret_cast< void * >(snrTable.data()));
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrFoldedTable_d, CL_TRUE, 0, snrFoldedTable.size() * sizeof(float), reinterpret_cast< void * >(snrFoldedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
     outputStoreTime.stop();
   } catch ( cl::Error & err ) {
@@ -408,7 +408,7 @@ int main(int argc, char * argv[]) {
 		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
       output << ((world.rank() % MPICols) * obs.getNrPeriods()) + period << " ";
       output << ((world.rank() / MPIRows) * obs.getNrDMs()) + dm << " ";
-      output << snrTable[(period * obs.getNrPaddedDMs()) + dm] << std::endl;
+      output << snrFoldedTable[(period * obs.getNrPaddedDMs()) + dm] << std::endl;
 		}
 	}
 	output.close();
@@ -442,7 +442,7 @@ int main(int argc, char * argv[]) {
   output << snrFoldedTime.getTotalTime() << " " << snrFoldedTime.getAverageTime() << " " << snrFoldedTime.getStandardDeviation() << " ";
   output << outputStoreTime.getTotalTime() << " " << outputStoreTime.getAverageTime() << " " << outputStoreTime.getStandardDeviation() << " ";
   output << std::endl;
-  outputFile.close();
+  output.close();
 
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Output and statistics saved to disk." << std::endl;
