@@ -246,13 +246,15 @@ int main(int argc, char * argv[]) {
     for ( unsigned int i = 0; i < dedispersionParameters[deviceName][obs.getNrDMs()].size(); i++ ) {
       std::cout << dedispersionParameters[deviceName][obs.getNrDMs()][i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
   }
   cl::NDRange transposeGlobal(obs.getNrPaddedDMs(), static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])));
   cl::NDRange transposeLocal(transposeParameters[deviceName][obs.getNrDMs()], 1);
   if ( world.rank() == 0 ) {
-    std::cout << "Transpose global: " << obs.getNrPaddedDMs() << ", " << static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])) << std::endl;
-    std::cout << "Transpose local: " << transposeParameters[deviceName][obs.getNrDMs()] << ", 1" << std::endl;
+    std::cout << "Transpose" << std::endl;
+    std::cout << "Global: " << obs.getNrPaddedDMs() << ", " << static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])) << std::endl;
+    std::cout << "Local: " << transposeParameters[deviceName][obs.getNrDMs()] << ", 1" << std::endl;
+    std::cout << std::endl;
   }
   cl::NDRange foldingGlobal(obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4], obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5]);
   cl::NDRange foldingLocal(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
