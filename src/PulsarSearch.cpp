@@ -427,7 +427,7 @@ int main(int argc, char * argv[]) {
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dedi");
   output << "# DM SNR" << std::endl;
   for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-    output << dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
+    output << ((world.rank() / MPIRows) * obs.getNrDMs()) + dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
   }
   output.close();
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stat");
