@@ -279,8 +279,13 @@ int main(int argc, char * argv[]) {
   cl::NDRange snrFoldedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3]);
   cl::NDRange snrFoldedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
   if ( world.rank() == 0 ) {
-    std::cout << "SNRFolded global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << ", " << obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << std::endl;
-    std::cout << "SNRFolded local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << std::endl;
+    std::cout << "SNRFolded" << std::endl;
+    std::cout << "Global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << ", " << obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << std::endl;
+    std::cout << "Local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << std::endl;
+    std::cout << "Parameters: ";
+    for ( unsigned int i = 0; i < snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].size(); i++ ) {
+      std::cout << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][i] << " ";
+    }
     std::cout << std::endl;
   }
 
