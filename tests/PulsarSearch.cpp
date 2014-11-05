@@ -206,7 +206,7 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
   delete shifts;
-  code = isa::OpenCL::getTransposeOpenCL(transposeParameters[deviceName][obs.getNrDMs()], obs.getNrSamplesPerSecond(), obs.getNrDMs(), obs.getPadding(), vectorWidth[deviceName], dataName);
+  code = isa::OpenCL::getTransposeOpenCL(transposeParameters[deviceName][obs.getNrDMs()], obs.getNrDMs(), obs.getNrSamplesPerSecond(), obs.getPadding(), vectorWidth[deviceName], dataName);
   try {
     transposeK = isa::OpenCL::compile("transpose", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
   } catch ( isa::OpenCL::OpenCLError & err ) {
