@@ -224,6 +224,27 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
+	if ( world.rank() == 0 ) {
+		double hostMemory = 0.0;
+		double deviceMemory = 0.0;
+
+    hostMemory += dispersedData.size() * sizeof(dataType);
+    hostMemory += maxDedispersedTable.size() * sizeof(dataType);
+    hostMemory += meanDedispersedTable.size() * sizeof(float);
+    hostMemory += rmsDedispersedTable.size() * sizeof(float);
+    hostMemory += snrFoldedTable.size() * sizeof(float);
+    deviceMemory += hostMemory;
+    deviceMemory += shifts->size() * sizeof(unsigned int);
+    deviceMemory += obs.getNrPeriods() * obs.getNrBins() * isa::utils::pad(2, obs.getPadding()) * sizeof(unsigned int);
+    deviceMemory += obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
+    deviceMemory += obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs() * sizeof(dataType);
+    deviceMemory += obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(dataType);
+    deviceMemory += obs.getNrBins() * obs.getNrPaddedPeriods() * 2 * sizeof(unsigned int);
+
+		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
+		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
+	}
+
 	// Generate OpenCL kernels
   std::string * code;
   cl::Kernel * dedispersionK, * foldingK, * transposeK, * snrDedispersedK, * snrFoldedK;
