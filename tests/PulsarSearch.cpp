@@ -43,6 +43,8 @@
 int main(int argc, char * argv[]) {
   bool print = false;
   bool random = false;
+	bool dataLOFAR = false;
+	bool dataSIGPROC = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
   unsigned int MPIRows = 0;
@@ -50,6 +52,8 @@ int main(int argc, char * argv[]) {
   unsigned int secondsToBuffer = 0;
   unsigned int remainingSamples = 0;
 	std::string deviceName;
+	std::string dataFile;
+	std::string headerFile;
 	std::string outputFile;
 	std::ofstream output;
   isa::utils::ArgumentList args(argc, argv);
@@ -81,15 +85,31 @@ int main(int argc, char * argv[]) {
 		readSNR(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
 
     print = args.getSwitch("-print");
-    random = args.getSwitch("-random");
 		obs.setPadding(padding[deviceName]);
 
-    period = args.getSwitchArgument< unsigned int >("-period");
-    width = args.getSwitchArgument< unsigned int >("-width");
-    DM = args.getSwitchArgument< float >("-dm");
-    obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
-    obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-    obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+		dataLOFAR = args.getSwitch("-lofar");
+		dataSIGPROC = args.getSwitch("-sigproc");
+		if ( dataLOFAR && dataSIGPROC ) {
+			std::cerr << "-lofar and -sigproc are mutually exclusive." << std::endl;
+			throw std::exception();
+		} else if ( dataLOFAR ) {
+			headerFile = args.getSwitchArgument< std::string >("-header");
+			dataFile = args.getSwitchArgument< std::string >("-data");
+		} else if ( dataSIGPROC ) {
+			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
+			dataFile = args.getSwitchArgument< std::string >("-data");
+			obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
+      obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
+			obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+		} else {
+      random = args.getSwitch("-random");
+      period = args.getSwitchArgument< unsigned int >("-period");
+      width = args.getSwitchArgument< unsigned int >("-width");
+      DM = args.getSwitchArgument< float >("-dm");
+      obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
+      obs.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
+      obs.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+		}
 		outputFile = args.getSwitchArgument< std::string >("-output");
 
     unsigned int tempUInts[3] = {args.getSwitchArgument< unsigned int >("-dm_node"), 0, 0};
@@ -101,7 +121,10 @@ int main(int argc, char * argv[]) {
     obs.setPeriodRange(tempUInts[0], tempUInts[1] + ((world.rank() % MPICols) * tempUInts[0] * tempUInts[2]), tempUInts[2]);
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snr_file ... [-print] [-random] -period ... -width ... -dm ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ... -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
+    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snr_file ... [-print] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
+    std::cerr << "\t -lofar -header ... -data ..." << std::endl;
+    std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t [-random] -period ... -width ... -dm ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -110,7 +133,14 @@ int main(int argc, char * argv[]) {
 
 	// Load observation data
 	std::vector< std::vector< dataType > * > * input = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
-  AstroData::generatePulsar(period, width, DM, obs, *input, random);
+	if ( dataLOFAR ) {
+    AstroData::readLOFAR(headerFile, dataFile, obs, *input);
+	} else if ( dataSIGPROC ) {
+		input->resize(obs.getNrSeconds());
+    AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *input);
+	} else {
+    AstroData::generatePulsar(period, width, DM, obs, *input, random);
+  }
 	if ( world.rank() == 0 ) {
     std::cout << "Device: " << deviceName << std::endl;
     std::cout << "Padding: " << padding[deviceName] << std::endl;
