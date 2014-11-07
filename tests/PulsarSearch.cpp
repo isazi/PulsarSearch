@@ -28,6 +28,7 @@
 #include <ArgumentList.hpp>
 #include <utils.hpp>
 #include <Observation.hpp>
+#include <ReadData.hpp>
 #include <Generator.hpp>
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
@@ -49,6 +50,7 @@ int main(int argc, char * argv[]) {
 	unsigned int clDeviceID = 0;
   unsigned int MPIRows = 0;
   unsigned int MPICols = 0;
+	unsigned int bytesToSkip = 0;
   unsigned int secondsToBuffer = 0;
   unsigned int remainingSamples = 0;
 	std::string deviceName;
