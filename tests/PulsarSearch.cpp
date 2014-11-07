@@ -245,6 +245,7 @@ int main(int argc, char * argv[]) {
 
 		std::cout << "Allocated host memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(hostMemory) << " GB." << std::endl;
 		std::cout << "Allocated device memory: " << std::fixed << std::setprecision(3) << isa::utils::giga(deviceMemory) << "GB." << std::endl;
+    std::cout << std::endl;
 	}
 
 	// Generate OpenCL kernels
