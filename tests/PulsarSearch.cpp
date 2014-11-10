@@ -97,6 +97,10 @@ int main(int argc, char * argv[]) {
 		} else if ( dataLOFAR ) {
 			headerFile = args.getSwitchArgument< std::string >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
+      bool limit = args.getSwitch("-limit");
+      if ( limit ) {
+        obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
+      }
 		} else if ( dataSIGPROC ) {
 			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
@@ -124,7 +128,8 @@ int main(int argc, char * argv[]) {
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
     std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snr_file ... [-print] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
-    std::cerr << "\t -lofar -header ... -data ..." << std::endl;
+    std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
+    std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     std::cerr << "\t [-random] -period ... -width ... -dm ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     return 1;
