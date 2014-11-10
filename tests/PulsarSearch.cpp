@@ -46,6 +46,7 @@ int main(int argc, char * argv[]) {
   bool random = false;
 	bool dataLOFAR = false;
 	bool dataSIGPROC = false;
+  bool limit = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
   unsigned int MPIRows = 0;
@@ -97,7 +98,7 @@ int main(int argc, char * argv[]) {
 		} else if ( dataLOFAR ) {
 			headerFile = args.getSwitchArgument< std::string >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
-      bool limit = args.getSwitch("-limit");
+      limit = args.getSwitch("-limit");
       if ( limit ) {
         obs.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       }
@@ -141,7 +142,11 @@ int main(int argc, char * argv[]) {
 	// Load observation data
 	std::vector< std::vector< dataType > * > * input = new std::vector< std::vector< dataType > * >(obs.getNrSeconds());
 	if ( dataLOFAR ) {
-    AstroData::readLOFAR(headerFile, dataFile, obs, *input);
+    if ( limit ) {
+      AstroData::readLOFAR(headerFile, dataFile, obs, *input, obs.getNrSeconds());
+    } else {
+      AstroData::readLOFAR(headerFile, dataFile, obs, *input);
+    }
 	} else if ( dataSIGPROC ) {
 		input->resize(obs.getNrSeconds());
     AstroData::readSIGPROC(obs, bytesToSkip, dataFile, *input);
