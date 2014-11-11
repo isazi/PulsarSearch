@@ -153,7 +153,7 @@ int main(int argc, char * argv[]) {
 	} else {
     AstroData::generatePulsar(period, width, DM, obs, *input, random);
   }
-	if ( world.rank() == 0 ) {
+	if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Device: " << deviceName << std::endl;
     std::cout << "Padding: " << padding[deviceName] << std::endl;
     std::cout << "Vector: " << vectorWidth[deviceName] << std::endl;
@@ -236,7 +236,7 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-	if ( world.rank() == 0 ) {
+	if ( DEBUG && world.rank() == 0 ) {
 		double hostMemory = 0.0;
 		double deviceMemory = 0.0;
 
@@ -302,7 +302,7 @@ int main(int argc, char * argv[]) {
   // Set execution parameters
   cl::NDRange dedispersionGlobal(obs.getNrSamplesPerPaddedSecond() / dedispersionParameters[deviceName][obs.getNrDMs()][3], obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()][3]);
   cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()][1], dedispersionParameters[deviceName][obs.getNrDMs()][2]);
-  if ( world.rank() == 0 ) {
+  if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Dedispersion" << std::endl;
     std::cout << "Global: " << obs.getNrSamplesPerPaddedSecond() / dedispersionParameters[deviceName][obs.getNrDMs()][3] << ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()][3] << std::endl;
     std::cout << "Local: " << dedispersionParameters[deviceName][obs.getNrDMs()][1] << ", " << dedispersionParameters[deviceName][obs.getNrDMs()][2] << std::endl;
@@ -314,7 +314,7 @@ int main(int argc, char * argv[]) {
   }
   cl::NDRange transposeGlobal(obs.getNrPaddedDMs(), static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])));
   cl::NDRange transposeLocal(transposeParameters[deviceName][obs.getNrDMs()], 1);
-  if ( world.rank() == 0 ) {
+  if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Transpose" << std::endl;
     std::cout << "Global: " << obs.getNrPaddedDMs() << ", " << static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])) << std::endl;
     std::cout << "Local: " << transposeParameters[deviceName][obs.getNrDMs()] << ", 1" << std::endl;
@@ -322,7 +322,7 @@ int main(int argc, char * argv[]) {
   }
   cl::NDRange foldingGlobal(obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4], obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5]);
   cl::NDRange foldingLocal(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
-  if ( world.rank() == 0 ) {
+  if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Folding" << std::endl;
     std::cout << "Global: " << obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << ", " << obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4] << ", " << obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5] << std::endl;
     std::cout << "Local: " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << std::endl;
@@ -334,7 +334,7 @@ int main(int argc, char * argv[]) {
   }
   cl::NDRange snrDedispersedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
   cl::NDRange snrDedispersedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0]);
-  if ( world.rank() == 0 ) {
+  if ( DEBUG && world.rank() == 0 ) {
     std::cout << "SNRDedispersed" << std::endl;
     std::cout << "Global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << std::endl;
     std::cout << "Local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << std::endl;
@@ -346,7 +346,7 @@ int main(int argc, char * argv[]) {
   }
   cl::NDRange snrFoldedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3]);
   cl::NDRange snrFoldedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
-  if ( world.rank() == 0 ) {
+  if ( DEBUG && world.rank() == 0 ) {
     std::cout << "SNRFolded" << std::endl;
     std::cout << "Global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << ", " << obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << std::endl;
     std::cout << "Local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << std::endl;
@@ -386,16 +386,18 @@ int main(int argc, char * argv[]) {
 		}
     try {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
-      if ( print && world.rank() == 0 ) {
-        std::cout << std::fixed << std::setprecision(3);
-        for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-          std::cout << channel << " : ";
-          for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
-            std::cout << dispersedData[(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+      if ( DEBUG ) {
+        if ( print && world.rank() == 0 ) {
+          std::cout << std::fixed << std::setprecision(3);
+          for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+            std::cout << channel << " : ";
+            for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
+              std::cout << dispersedData[(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+            }
+            std::cout << std::endl;
           }
           std::cout << std::endl;
         }
-        std::cout << std::endl;
       }
     } catch ( cl::Error & err ) {
       std::cerr << err.what() << std::endl;
@@ -406,44 +408,50 @@ int main(int argc, char * argv[]) {
 		try {
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
       syncPoint.wait();
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
-      if ( print && world.rank() == 0 ) {
-        std::cout << std::fixed << std::setprecision(3);
-        for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-          std::cout << dm << " : ";
-          for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
-            std::cout << dedispersedData[(dm * obs.getNrSamplesPerPaddedSecond()) + sample] << " ";
+      if ( DEBUG ) {
+        if ( print && world.rank() == 0 ) {
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
+          std::cout << std::fixed << std::setprecision(3);
+          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+            std::cout << dm << " : ";
+            for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
+              std::cout << dedispersedData[(dm * obs.getNrSamplesPerPaddedSecond()) + sample] << " ";
+            }
+            std::cout << std::endl;
           }
           std::cout << std::endl;
         }
-        std::cout << std::endl;
       }
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*transposeK, cl::NullRange, transposeGlobal, transposeLocal, 0, &syncPoint);
       syncPoint.wait();
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(transposedData_d, CL_TRUE, 0, transposedData.size() * sizeof(dataType), reinterpret_cast< void * >(transposedData.data()));
-      if ( print && world.rank() == 0 ) {
-        std::cout << std::fixed << std::setprecision(3);
-        for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
-          std::cout << sample << " : ";
-          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-            std::cout << transposedData[(sample * obs.getNrPaddedDMs()) + dm] << " ";
+      if ( DEBUG ) {
+        if ( print && world.rank() == 0 ) {
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(transposedData_d, CL_TRUE, 0, transposedData.size() * sizeof(dataType), reinterpret_cast< void * >(transposedData.data()));
+          std::cout << std::fixed << std::setprecision(3);
+          for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
+            std::cout << sample << " : ";
+            for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+              std::cout << transposedData[(sample * obs.getNrPaddedDMs()) + dm] << " ";
+            }
+            std::cout << std::endl;
           }
           std::cout << std::endl;
         }
-        std::cout << std::endl;
       }
       snrDedispersedK->setArg(0, static_cast< float >(second));
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrDedispersedK, cl::NullRange, snrDedispersedGlobal, snrDedispersedLocal, 0, &syncPoint);
       syncPoint.wait();
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
-      if ( print && world.rank() == 0 ) {
-        std::cout << std::fixed << std::setprecision(6);
-        for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-          std::cout << dm << ": " << maxDedispersedTable[dm] << " " << meanDedispersedTable[dm] << " " << std::sqrt(rmsDedispersedTable[dm]) << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
+      if ( DEBUG ) {
+        if ( print && world.rank() == 0 ) {
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
+          std::cout << std::fixed << std::setprecision(6);
+          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+            std::cout << dm << ": " << maxDedispersedTable[dm] << " " << meanDedispersedTable[dm] << " " << std::sqrt(rmsDedispersedTable[dm]) << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
+          }
+          std::cout << std::endl;
         }
-        std::cout << std::endl;
       }
       foldingK->setArg(0, second);
 			if ( second % 2 == 0 ) {
@@ -455,20 +463,22 @@ int main(int argc, char * argv[]) {
 			}
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*foldingK, cl::NullRange, foldingGlobal, foldingLocal, 0, &syncPoint);
       syncPoint.wait();
-      clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
-      if ( print && world.rank() == 0 ) {
-        std::cout << std::fixed << std::setprecision(3);
-        for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-          for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
-            std::cout << dm << " " << period << " : ";
-            for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
-              std::cout << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << " ";
+      if ( DEBUG ) {
+        if ( print && world.rank() == 0 ) {
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
+          std::cout << std::fixed << std::setprecision(3);
+          for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+            for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
+              std::cout << dm << " " << period << " : ";
+              for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
+                std::cout << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << " ";
+              }
+              std::cout << std::endl;
             }
             std::cout << std::endl;
           }
           std::cout << std::endl;
         }
-        std::cout << std::endl;
       }
 		} catch ( cl::Error & err ) {
 			std::cerr << err.what() << std::endl;
