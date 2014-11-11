@@ -5,8 +5,8 @@ A many-core pulsar searching pipeline.
 
 ## Publications
 
-* Alessio Sclocco, Henri E. Bal, Rob V. van Nieuwpoort. _Real-Time Pulsars Pipeline Using Many-Cores_. **AAS Exascale Radio Astronomy Meeting**, 30 March - 4 April, 2014, Monterey (California), USA.
-* Alessio Sclocco, Rob V. van Nieuwpoort. _Pulsar Searching with Many-Cores_. **Facing the Multicore-Challenge III**, September 19-21, 2012, Stuttgart, Germany.
+* Alessio Sclocco, Henri E. Bal, Rob V. van Nieuwpoort. _Real-Time Pulsars Pipeline Using Many-Cores_. **AAS Exascale Radio Astronomy Meeting**, 30 March - 4 April, 2014, Monterey (California), USA. [abstract](http://link.springer.com/chapter/10.1007/978-3-642-35893-7_12)
+* Alessio Sclocco, Rob V. van Nieuwpoort. _Pulsar Searching with Many-Cores_. **Facing the Multicore-Challenge III**, September 19-21, 2012, Stuttgart, Germany. [abstract](http://adsabs.harvard.edu/abs/2014era..conf20301S)
 
 ## Dependencies
 
