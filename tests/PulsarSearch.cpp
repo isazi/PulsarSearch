@@ -539,6 +539,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	// Store output
+  output.sync_with_stdio(false);
   output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold");
   output << std::fixed << std::setprecision(6);
   output << "# bin SNR" << std::endl;
