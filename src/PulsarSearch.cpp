@@ -508,7 +508,7 @@ int main(int argc, char * argv[]) {
           std::cout << std::endl;
         }
       }
-      if ( second == obs.getNrSeconds() - secondsToBuffer ) {
+      if ( second == (obs.getNrSeconds() - secondsToBuffer) - 1 ) {
         snrFoldedTime.start();
         clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrFoldedK, cl::NullRange, snrFoldedGlobal, snrFoldedLocal, 0, &syncPoint);
         syncPoint.wait();
