@@ -18,6 +18,11 @@ A many-core pulsar searching pipeline.
 * [Folding](https://github.com/isazi/Folding) - master branch
 * [SNR](https://github.com/isazi/SNR) - master branch
 
+External:
+* [Boost](http://www.boost.org/) - MPI
+* [CImg](http://cimg.sourceforge.net/) - Folded SNR image generation
+* [HDF5](http://www.hdfgroup.org/HDF5/) - Reading LOFAR data
+
 ## License
 
 Licensed under the Apache License, Version 2.0.
