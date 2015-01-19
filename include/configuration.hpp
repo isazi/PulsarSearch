@@ -1,4 +1,6 @@
 
+#include <Dedispersion.hpp>
+
 #ifndef CONFIGURATION_HPP
 #define CONFIGURATION_HPP
 
@@ -16,7 +18,7 @@ std::map< std::string, unsigned int > padding;
 std::map< std::string, unsigned int > vectorWidth;
 
 // Tuned parameters
-std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > dedispersionParameters;
+std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > dedispersionParameters;
 std::map< std::string, std::map< unsigned int, unsigned int > > transposeParameters;
 std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > foldingParameters;
 std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > snrParameters;

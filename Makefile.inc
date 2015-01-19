@@ -9,6 +9,7 @@ ISA_OPENCL_INCLUDE := $(HOME)/src/OpenCL/include
 ISA_ASTRO_INCLUDE := $(HOME)/src/AstroData/include
 # https://github.com/isazi/Dedispersion
 DEDISPERSION_INCLUDE := $(HOME)/src/Dedispersion/include
+DEDISPERSION_SRC := $(HOME)/src/Dedispersion/src/Dedispersion.cpp
 # https://github.com/isazi/Transpose
 TRANSPOSE_INCLUDE := $(HOME)/src/Transpose/include
 # https://github.com/isazi/Folding

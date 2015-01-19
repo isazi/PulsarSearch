@@ -54,7 +54,7 @@ void readVectorWidth(std::map< std::string, unsigned int > & vectorWidth, const 
 	}
 }
 
-void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector< unsigned int > > > & dedispersionParameters, const std::string  & dedispersionFilename) {
+void readDedispersion(std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > & dedispersionParameters, const std::string  & dedispersionFilename) {
 	std::string temp;
 	std::ifstream dedispersionFile(dedispersionFilename);
 
@@ -67,7 +67,7 @@ void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector
 		}
 		std::string deviceName;
 		unsigned int nrDMs = 0;
-		std::vector< unsigned int > parameters(5);
+    PulsarSearch::DedispersionConf conf;
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
@@ -76,26 +76,29 @@ void readDedispersion(std::map< std::string, std::map< unsigned int, std::vector
 		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[0] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		conf.setLocalMem(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[1] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		conf.setUnroll(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[2] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		conf.setNrSamplesPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[3] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		conf.setNrDMsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
-		parameters[4] = isa::utils::castToType< std::string, unsigned int >(temp);
+		splitPoint = temp.find(" ");
+		conf.setNrSamplesPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		conf.setNrDMsPerThread(isa::utils::castToType< std::string, unsigned int >(temp));
 
 		if ( dedispersionParameters.count(deviceName) == 0 ) {
-      std::map< unsigned int, std::vector< unsigned int > > container;
+      std::map< unsigned int, PulsarSearch::DedispersionConf > container;
 
-			container.insert(std::make_pair(nrDMs, parameters));
+			container.insert(std::make_pair(nrDMs, conf));
 			dedispersionParameters.insert(std::make_pair(deviceName, container));
 		} else {
-			dedispersionParameters[deviceName].insert(std::make_pair(nrDMs, parameters));
+			dedispersionParameters[deviceName].insert(std::make_pair(nrDMs, conf));
 		}
 	}
 }

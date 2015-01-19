@@ -5,7 +5,7 @@ include ../Makefile.inc
 all: clean PulsarSearch SearchImage SearchPercentile
 
 PulsarSearch: PulsarSearch.cpp
-	$(MPICXX) -o $(PROJ_BASE)/bin/PulsarSearch PulsarSearch.cpp readConfiguration.cpp $(INCLUDES) $(LIBS) $(CFLAGS) $(LDFLAGS)
+	$(MPICXX) -o $(PROJ_BASE)/bin/PulsarSearch PulsarSearch.cpp readConfiguration.cpp $(DEDISPERSION_SRC) $(INCLUDES) $(LIBS) $(CFLAGS) $(LDFLAGS)
 
 SearchImage: searchImage.cpp
 	$(CC) -o $(PROJ_BASE)/bin/SearchImage searchImage.cpp $(IMG_INCLUDES) $(CFLAGS) $(IMG_LDFLAGS)
