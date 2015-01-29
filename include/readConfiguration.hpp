@@ -18,6 +18,8 @@
 
 #include <Dedispersion.hpp>
 #include <Transpose.hpp>
+#include <SNR.hpp>
+#include <Folding.hpp>
 
 #ifndef READ_CONFIGURATION_HPP
 #define READ_CONFIGURATION_HPP
