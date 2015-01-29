@@ -319,7 +319,7 @@ int main(int argc, char * argv[]) {
   cl::NDRange dedispersionLocal(dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock(), dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Dedispersion" << std::endl;
-    std::cout << "Global: " << nrThreads ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread() << std::endl;
+    std::cout << "Global: " << nrThreads << ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread() << std::endl;
     std::cout << "Local: " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() << std::endl;
     std::cout << "Parameters: ";
     std::cout << dedispersionParameters[deviceName][obs.getNrDMs()].print() << std::endl;
