@@ -33,7 +33,7 @@ endif
 LDFLAGS := -lm
 CL_LDFLAGS := $(LDFLAGS) -lOpenCL
 BOOST_LDFLAGS := -lboost_mpi -lboost_serialization 
-HDF5_LDFLAGS := -lhdf5_cpp
+HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
 CIMG_LDFLAGS := $(LDFLAGS) -lX11 -fopenmp
 
 CC := g++
