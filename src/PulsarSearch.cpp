@@ -343,7 +343,7 @@ int main(int argc, char * argv[]) {
   cl::NDRange foldingLocal(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock(), foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerBlock(), foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerBlock());
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Folding" << std::endl;
-    std::cout << "Global: " << nrThreads << ", " << obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodPerThread() << ", " << obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerThread() << std::endl;
+    std::cout << "Global: " << nrThreads << ", " << obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerThread() << ", " << obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerThread() << std::endl;
     std::cout << "Local: " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock() << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerBlock() << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerBlock() << std::endl;
     std::cout << "Parameters: ";
     std::cout << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].print() << std::endl;
