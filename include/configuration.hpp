@@ -22,7 +22,7 @@ std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > 
 std::map< std::string, std::map< unsigned int, isa::OpenCL::transposeConf > > transposeParameters;
 std::map< std::string, std::map< unsigned int, PulsarSearch::snrDedispersedConf > > snrDParameters;
 std::map< std::string, std::map< unsigned int, std::map< unsigned int, PulsarSearch::FoldingConf > > > foldingParameters;
-std::map< std::string, std::map< unsigned int, std::map< unsigned int, PulsarSearch::snrFoldedConf > > > snrFDParameters;
+std::map< std::string, std::map< unsigned int, std::map< unsigned int, PulsarSearch::snrFoldedConf > > > snrFParameters;
 
 #endif // CONFIGURATION_HPP
 
