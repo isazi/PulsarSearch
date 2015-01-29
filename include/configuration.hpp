@@ -1,5 +1,8 @@
 
 #include <Dedispersion.hpp>
+#include <Transpose.hpp>
+#include <SNR.hpp>
+#include <Folding.hpp>
 
 #ifndef CONFIGURATION_HPP
 #define CONFIGURATION_HPP
