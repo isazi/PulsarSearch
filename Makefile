@@ -40,7 +40,7 @@ CC := g++
 MPI := mpicxx
 
 # Dependencies
-KERNELS := $(DEDISPERSION)/bin/Dedispersion.o $(TRANSPOSE)/bin/Transpose.o $(FOLDING)/bin/Folding.o $(SNR)/bin/SNR.o
+KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(TRANSPOSE)/bin/Transpose.o $(FOLDING)/bin/Bins.o $(FOLDING)/bin/Folding.o $(SNR)/bin/SNR.o
 DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/ColorMap.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 
