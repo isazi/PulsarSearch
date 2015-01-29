@@ -286,21 +286,21 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-  code = PulsarSearch::getFoldingOpenCL(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6], dataName, obs);
+  code = PulsarSearch::getFoldingOpenCL(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()], dataName, obs);
   try {
     foldingK = isa::OpenCL::compile("folding", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-  code = PulsarSearch::getSNRDedispersedOpenCL(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], dataName, obs);
+  code = PulsarSearch::getSNRDedispersedOpenCL(snrParameters[deviceName][obs.getNrDMs()], dataName, obs);
   try {
     snrDedispersedK = isa::OpenCL::compile("snrDedispersed", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-  code = PulsarSearch::getSNRFoldedOpenCL(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], dataName, obs);
+  code = PulsarSearch::getSNRFoldedOpenCL(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()], dataName, obs);
   try {
     snrFoldedK = isa::OpenCL::compile("snrFolded", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
   } catch ( isa::OpenCL::OpenCLError & err ) {
@@ -321,52 +321,62 @@ int main(int argc, char * argv[]) {
     std::cout << "Global: " << nrThreads ", " << obs.getNrDMs() / dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread() << std::endl;
     std::cout << "Local: " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() << ", " << dedispersionParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() << std::endl;
     std::cout << "Parameters: ";
-    std::cout << dedispersionParameters[deviceName][obs.getNrDMs()].print() << " ";
-    std::cout << std::endl << std::endl;
-  }
-  cl::NDRange transposeGlobal(obs.getNrPaddedDMs(), static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])));
-  cl::NDRange transposeLocal(transposeParameters[deviceName][obs.getNrDMs()], 1);
-  if ( DEBUG && world.rank() == 0 ) {
-    std::cout << "Transpose" << std::endl;
-    std::cout << "Global: " << obs.getNrPaddedDMs() << ", " << static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()])) << std::endl;
-    std::cout << "Local: " << transposeParameters[deviceName][obs.getNrDMs()] << ", 1" << std::endl;
+    std::cout << dedispersionParameters[deviceName][obs.getNrDMs()].print() << std::endl;
     std::cout << std::endl;
   }
-  cl::NDRange foldingGlobal(obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3], obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4], obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5]);
-  cl::NDRange foldingLocal(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1], foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
+  cl::NDRange transposeGlobal(obs.getNrPaddedDMs(), static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()].getNrItemsPerBlock())));
+  cl::NDRange transposeLocal(transposeParameters[deviceName][obs.getNrDMs()].getNrItemsPerBlock(), 1);
+  if ( DEBUG && world.rank() == 0 ) {
+    std::cout << "Transpose" << std::endl;
+    std::cout << "Global: " << obs.getNrPaddedDMs() << ", " << static_cast< unsigned int >(std::ceil(static_cast< double >(obs.getNrSamplesPerSecond()) / transposeParameters[deviceName][obs.getNrDMs()].getNrItemsPerBlock())) << std::endl;
+    std::cout << "Local: " << transposeParameters[deviceName][obs.getNrDMs()].getNrItemsPerBlock() << ", 1" << std::endl;
+    std::cout << "Parameters: " << transposeParameters[deviceName][obs.getNrDMs()].print() << std::endl;
+    std::cout << std::endl;
+  }
+  if ( obs.getNrDMs() % (foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock() * foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerThread() * foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getVector()) == 0 ) {
+    nrThreads = obs.getNrDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerThread() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getVector();
+  } else {
+    nrThreads = obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerThread() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getVector();
+  }
+  cl::NDRange foldingGlobal(nrThreads, obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerThread(), obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerThread());
+  cl::NDRange foldingLocal(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock(), foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerBlock(), foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerBlock());
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "Folding" << std::endl;
-    std::cout << "Global: " << obs.getNrPaddedDMs() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << ", " << obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][4] << ", " << obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][6] / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][5] << std::endl;
-    std::cout << "Local: " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << std::endl;
+    std::cout << "Global: " << nrThreads << ", " << obs.getNrPeriods() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodPerThread() << ", " << obs.getNrBins() / foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerThread() << std::endl;
+    std::cout << "Local: " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock() << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerBlock() << ", " << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrBinsPerBlock() << std::endl;
     std::cout << "Parameters: ";
-    for ( unsigned int i = 0; i < foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].size(); i++ ) {
-      std::cout << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][i] << " ";
-    }
-    std::cout << std::endl << std::endl;
+    std::cout << foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].print() << std::endl;
+    std::cout << std::endl;
   }
-  cl::NDRange snrDedispersedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2]);
-  cl::NDRange snrDedispersedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0]);
+  if ( obs.getNrDMs() % (snrDParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() * snrDParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread()) == 0 ) {
+    nrThreads = obs.getNrDMs() / snrDParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread();
+  } else {
+    nrThreads = obs.getNrPaddedDMs() / snrDParameters[deviceName][obs.getNrDMs()].getNrDMsPerThread();
+  }
+  cl::NDRange snrDedispersedGlobal(nrThreads);
+  cl::NDRange snrDedispersedLocal(snrDParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock());
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "SNRDedispersed" << std::endl;
-    std::cout << "Global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << std::endl;
-    std::cout << "Local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << std::endl;
+    std::cout << "Global: " << nrThreads << std::endl;
+    std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() << std::endl;
     std::cout << "Parameters: ";
-    for ( unsigned int i = 0; i < snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].size(); i += 2 ) {
-      std::cout << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][i] << " ";
-    }
-    std::cout << std::endl << std::endl;
+    std::cout << snrParameters[deviceName][obs.getNrDMs()].print() << std::endl;
+    std::cout << std::endl;
   }
-  cl::NDRange snrFoldedGlobal(obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2], obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3]);
-  cl::NDRange snrFoldedLocal(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0], snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1]);
+  if ( obs.getNrDMs() % (snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock() * snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerThread()) == 0 ) {
+    nrThreads = obs.getNrDMs() / snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerThread();
+  } else {
+    nrThreads = obs.getNrPaddedDMs() / snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerThread();
+  }
+  cl::NDRange snrFoldedGlobal(nrThreads, obs.getNrPeriods() / snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerThread());
+  cl::NDRange snrFoldedLocal(snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock(), snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerBlock());
   if ( DEBUG && world.rank() == 0 ) {
     std::cout << "SNRFolded" << std::endl;
-    std::cout << "Global: " << obs.getNrPaddedDMs() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][2] << ", " << obs.getNrPeriods() / snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][3] << std::endl;
-    std::cout << "Local: " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][0] << ", " << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][1] << std::endl;
+    std::cout << "Global: " << nrThreads << ", " << obs.getNrPeriods() / snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerThread() << std::endl;
+    std::cout << "Local: " << snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock() << ", " << snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrPeriodsPerBlock() << std::endl;
     std::cout << "Parameters: ";
-    for ( unsigned int i = 0; i < snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].size(); i++ ) {
-      std::cout << snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()][i] << " ";
-    }
-    std::cout << std::endl << std::endl;
+    std::cout << snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].print() << std::endl;
+    std::cout << std::endl;
   }
 
   dedispersionK->setArg(0, dispersedData_d);
