@@ -87,7 +87,8 @@ int main(int argc, char * argv[]) {
 		readDedispersion(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
 		readTranspose(transposeParameters, args.getSwitchArgument< std::string >("-transpose_file"));
 		readFolding(foldingParameters, args.getSwitchArgument< std::string >("-folding_file"));
-		readSNR(snrParameters, args.getSwitchArgument< std::string >("-snr_file"));
+		readSNRD(snrDParameters, args.getSwitchArgument< std::string >("-snrd_file"));
+		readSNRF(snrFParameters, args.getSwitchArgument< std::string >("-snrf_file"));
 
     print = args.getSwitch("-print");
 		obs.setPadding(padding[deviceName]);
@@ -130,7 +131,7 @@ int main(int argc, char * argv[]) {
     obs.setPeriodRange(tempUInts[0], tempUInts[1] + ((world.rank() % MPICols) * tempUInts[0] * tempUInts[2]), tempUInts[2]);
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snr_file ... [-print] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
+    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snrd_file ... -snrf_file [-print] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
