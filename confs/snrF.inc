@@ -1,0 +1,1 @@
+# device nrDMs nrPeriods nrDMsPerBlock nrPeriodsPerBlock nrDMsPerThread nrPeriodsPerThread
