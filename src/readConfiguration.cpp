@@ -159,9 +159,6 @@ void readSNRD(std::map< std::string, std::map< unsigned int, PulsarSearch::snrDe
 		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		nrPeriods = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
 		parameters.setNrDMsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
