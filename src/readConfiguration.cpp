@@ -15,7 +15,6 @@
 #include <string>
 #include <fstream>
 #include <map>
-#include <vector>
 #include <cctype>
 
 #include <readConfiguration.hpp>
@@ -228,7 +227,7 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 			externalContainer.insert(std::make_pair(nrDMs, internalContainer));
 			foldingParameters.insert(std::make_pair(deviceName, externalContainer));
 		} else if ( foldingParameters[deviceName].count(nrDMs) == 0 ) {
-      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, PulsarSearch::FoldingConf > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			foldingParameters[deviceName].insert(std::make_pair(nrDMs, internalContainer));
@@ -282,7 +281,7 @@ void readSNRF(std::map< std::string, std::map< unsigned int, std::map< unsigned 
 			externalContainer.insert(std::make_pair(nrDMs, internalContainer));
 			snrParameters.insert(std::make_pair(deviceName, externalContainer));
 		} else if ( snrParameters[deviceName].count(nrDMs) == 0 ) {
-      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, PulsarSearch::snrFoldedConf > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			snrParameters[deviceName].insert(std::make_pair(nrDMs, internalContainer));
