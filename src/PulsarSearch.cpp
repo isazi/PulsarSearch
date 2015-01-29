@@ -294,14 +294,14 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-  code = PulsarSearch::getSNRDedispersedOpenCL(snrParameters[deviceName][obs.getNrDMs()], dataName, obs);
+  code = PulsarSearch::getSNRDedispersedOpenCL(snrDParameters[deviceName][obs.getNrDMs()], dataName, obs);
   try {
     snrDedispersedK = isa::OpenCL::compile("snrDedispersed", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
   } catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
-  code = PulsarSearch::getSNRFoldedOpenCL(snrParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()], dataName, obs);
+  code = PulsarSearch::getSNRFoldedOpenCL(snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()], dataName, obs);
   try {
     snrFoldedK = isa::OpenCL::compile("snrFolded", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
   } catch ( isa::OpenCL::OpenCLError & err ) {
@@ -361,7 +361,7 @@ int main(int argc, char * argv[]) {
     std::cout << "Global: " << nrThreads << std::endl;
     std::cout << "Local: " << snrDParameters[deviceName][obs.getNrDMs()].getNrDMsPerBlock() << std::endl;
     std::cout << "Parameters: ";
-    std::cout << snrParameters[deviceName][obs.getNrDMs()].print() << std::endl;
+    std::cout << snrDParameters[deviceName][obs.getNrDMs()].print() << std::endl;
     std::cout << std::endl;
   }
   if ( obs.getNrDMs() % (snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerBlock() * snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()].getNrDMsPerThread()) == 0 ) {
