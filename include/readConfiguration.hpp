@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <Dedispersion.hpp>
+#include <Transpose.hpp>
 
 #ifndef READ_CONFIGURATION_HPP
 #define READ_CONFIGURATION_HPP
@@ -24,10 +25,10 @@
 void readPadding(std::map< std::string, unsigned int > & padding, const std::string & paddingFilename);
 void readVectorWidth(std::map< std::string, unsigned int > & vectorWidth, const std::string & vectorFilename);
 void readDedispersion(std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > & dedispersionParameters, const std::string & dedispersionFilename);
-void readTranspose(std::map< std::string, std::map< unsigned int, unsigned int > > & transposeParameters, const std::string & transposeFilename);
-void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const std::string & foldingFilename);
-void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const std::string & snrFilename);
-
+void readTranspose(std::map< std::string, std::map< unsigned int, isa::OpenCL::transposeConf > > & transposeParameters, const std::string & transposeFilename);
+void readSNRD(std::map< std::string, std::map< unsigned int, PulsarSearch::snrDedispersedConf > > & snrParameters, const std::string & snrFilename);
+void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, PulsarSearch::FoldingConf > > > & foldingParameters, const std::string & foldingFilename);
+void readSNRF(std::map< std::string, std::map< unsigned int, std::map< unsigned int, PulsarSearch::snrFoldedConf > > > & snrParameters, const std::string & snrFilename);
 
 #endif // READ_CONFIGURATION_HPP
 

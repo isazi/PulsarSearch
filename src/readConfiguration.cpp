@@ -103,7 +103,7 @@ void readDedispersion(std::map< std::string, std::map< unsigned int, PulsarSearc
 	}
 }
 
-void readTranspose(std::map< std::string, std::map< unsigned int, unsigned int > > & transposeParameters, const std::string & transposeFilename) {
+void readTranspose(std::map< std::string, std::map< unsigned int, isa::OpenCL::transposeConf > > & transposeParameters, const std::string & transposeFilename) {
 	std::string temp;
 	std::ifstream transposeFile(transposeFilename);
 
@@ -116,7 +116,7 @@ void readTranspose(std::map< std::string, std::map< unsigned int, unsigned int >
 		}
 		std::string deviceName;
 		unsigned int nrDMs = 0;
-		unsigned int parameter = 0;
+    isa::OpenCL::transposeConf parameters;
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
@@ -124,20 +124,61 @@ void readTranspose(std::map< std::string, std::map< unsigned int, unsigned int >
 		splitPoint = temp.find(" ");
 		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
-		parameter = isa::utils::castToType< std::string, unsigned int >(temp);
+		parameters.setNrItemsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp));
 
 		if ( transposeParameters.count(deviceName) == 0 ) {
-      std::map< unsigned int, unsigned int > container;
+      std::map< unsigned int, isa::OpenCL::transposeConf > container;
 
-			container.insert(std::make_pair(nrDMs, parameter));
+			container.insert(std::make_pair(nrDMs, parameters));
 			transposeParameters.insert(std::make_pair(deviceName, container));
 		} else {
-			transposeParameters[deviceName].insert(std::make_pair(nrDMs, parameter));
+			transposeParameters[deviceName].insert(std::make_pair(nrDMs, parameters));
 		}
 	}
 }
 
-void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & foldingParameters, const std::string & foldingFilename) {
+void readSNRD(std::map< std::string, std::map< unsigned int, PulsarSearch::snrDedispersedConf > > & snrParameters, const std::string & snrFilename) {
+	std::string temp;
+	std::ifstream snrFile(snrFilename);
+
+	while ( ! snrFile.eof() ) {
+		unsigned int splitPoint = 0;
+
+		std::getline(snrFile, temp);
+		if ( ! std::isalpha(temp[0]) ) {
+			continue;
+		}
+		std::string deviceName;
+		unsigned int nrDMs = 0;
+    PulsarSearch::snrDedispersedConf parameters;
+
+		splitPoint = temp.find(" ");
+		deviceName = temp.substr(0, splitPoint);
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		nrPeriods = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		parameters.setNrDMsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		parameters.setNrDMsPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+
+		if ( snrParameters.count(deviceName) == 0 ) {
+      std::map< unsigned int, PulsarSearch::snrDedispersedConf > container;
+
+			container.insert(std::make_pair(nrDMs, parameters));
+			snrParameters.insert(std::make_pair(deviceName, container));
+		} else {
+			snrParameters[deviceName].insert(std::make_pair(nrDMs, parameters));
+		}
+	}
+}
+
+void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsigned int, PulsarSearch::FoldingConf > > > & foldingParameters, const std::string & foldingFilename) {
 	std::string temp;
 	std::ifstream foldingFile(foldingFilename);
 
@@ -151,7 +192,7 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 		std::string deviceName;
 		unsigned int nrDMs = 0;
 		unsigned int nrPeriods = 0;
-		std::vector< unsigned int > parameters(7);
+    PulsarSearch::FoldingConf parameters;
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
@@ -163,28 +204,28 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 		nrPeriods = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[0] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrDMsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[1] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrPeriodsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[2] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrBinsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[3] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrDMsPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[4] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrPeriodsPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[5] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrBinsPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
-		parameters[6] = isa::utils::castToType< std::string, unsigned int >(temp);
+		parameters.setVector(isa::utils::castToType< std::string, unsigned int >(temp));
 
 		if ( foldingParameters.count(deviceName) == 0 ) {
-      std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > externalContainer;
-      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, std::map< unsigned int, PulsarSearch::FoldingConf > > externalContainer;
+      std::map< unsigned int, PulsarSearch::FoldingConf > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			externalContainer.insert(std::make_pair(nrDMs, internalContainer));
@@ -200,7 +241,7 @@ void readFolding(std::map< std::string, std::map< unsigned int, std::map< unsign
 	}
 }
 
-void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > > & snrParameters, const std::string & snrFilename) {
+void readSNRF(std::map< std::string, std::map< unsigned int, std::map< unsigned int, PulsarSearch::snrFoldedConf > > > & snrParameters, const std::string & snrFilename) {
 	std::string temp;
 	std::ifstream snrFile(snrFilename);
 
@@ -214,7 +255,7 @@ void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned i
 		std::string deviceName;
 		unsigned int nrDMs = 0;
 		unsigned int nrPeriods = 0;
-		std::vector< unsigned int > parameters(4);
+    PulsarSearch::snrFoldedConf parameters;
 
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
@@ -226,19 +267,19 @@ void readSNR(std::map< std::string, std::map< unsigned int, std::map< unsigned i
 		nrPeriods = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[0] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrDMsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[1] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrPeriodsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		parameters[2] = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		parameters.setNrDMsPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
-		parameters[3] = isa::utils::castToType< std::string, unsigned int >(temp);
+		parameters.setNrPeriodsPerThread(isa::utils::castToType< std::string, unsigned int >(temp));
 
 		if ( snrParameters.count(deviceName) == 0 ) {
-      std::map< unsigned int, std::map< unsigned int, std::vector< unsigned int > > > externalContainer;
-      std::map< unsigned int, std::vector< unsigned int > > internalContainer;
+      std::map< unsigned int, std::map< unsigned int, PulsarSearch::snrFoldedConf > > externalContainer;
+      std::map< unsigned int, PulsarSearch::snrFoldedConf > internalContainer;
 
 			internalContainer.insert(std::make_pair(nrPeriods, parameters));
 			externalContainer.insert(std::make_pair(nrDMs, internalContainer));
