@@ -50,7 +50,7 @@ all: bin/readConfiguration.o bin/PulsarSearch bin/searchImage bin/searchPercenti
 bin/readConfiguration.o: $(DEPS) $(KERNELS) include/readConfiguration.hpp src/readConfiguration.cpp
 	$(CC) -o bin/readConfiguration.o -c src/readConfiguration.cpp $(INCLUDES) $(CFLAGS)
 
-bin/PulsarSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp bin/readConfiguration.o
+bin/PulsarSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp bin/readConfiguration.o include/configuration.hpp src/PulsarSearch.cpp
 	$(MPI) -o bin/PulsarSearch src/PulsarSearch.cpp bin/readConfiguration.o $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(BOOST_LIBS) $(BOOST_LDFLAGS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 bin/searchImage: $(DEPS) src/searchImage.cpp
