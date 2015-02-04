@@ -44,6 +44,7 @@
 
 int main(int argc, char * argv[]) {
   bool print = false;
+  bool saveOutput = false;
   bool random = false;
 	bool dataLOFAR = false;
 	bool dataSIGPROC = false;
@@ -91,6 +92,7 @@ int main(int argc, char * argv[]) {
 		readSNRF(snrFParameters, args.getSwitchArgument< std::string >("-snrf_file"));
 
     print = args.getSwitch("-print");
+    saveOutput = args.getSwitch("-save_output");
 		obs.setPadding(padding[deviceName]);
 
 		dataLOFAR = args.getSwitch("-lofar");
@@ -131,7 +133,7 @@ int main(int argc, char * argv[]) {
     obs.setPeriodRange(tempUInts[0], tempUInts[1] + ((world.rank() % MPICols) * tempUInts[0] * tempUInts[2]), tempUInts[2]);
 		obs.setNrBins(args.getSwitchArgument< unsigned int >("-period_bins"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snrd_file ... -snrf_file [-print] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
+    std::cerr <<  args.getName() << " -mpi_cols ... -mpi_rows ... -opencl_platform ... -opencl_device ... -device_name ... -padding_file ... -vector_file ... -dedispersion_file ... -transpose_file ... -folding_file ... -snrd_file ... -snrf_file [-print] [-save_output] [-lofar] [-sigproc] -output ... -dm_node ... -dm_first ... -dm_step ... -period_node ... -period_first ... -period_step ... -period_bins ..."<< std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
@@ -553,38 +555,40 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 
-	// Store output
   output.sync_with_stdio(false);
-  output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold");
-  output << std::fixed << std::setprecision(6);
-  output << "# bin SNR" << std::endl;
-  for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-    for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
-      output << "# " << dm << " " << period << std::endl;
-      for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
-        output << bin << " " << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << std::endl;
+	// Store output
+  if ( saveOutput ) {
+    output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".fold");
+    output << std::fixed << std::setprecision(6);
+    output << "# bin SNR" << std::endl;
+    for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+      for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
+        output << "# " << dm << " " << period << std::endl;
+        for ( unsigned int bin = 0; bin < obs.getNrBins(); bin++ ) {
+          output << bin << " " << foldedData[(bin * obs.getNrPeriods() * obs.getNrPaddedDMs()) + (period * obs.getNrPaddedDMs()) + dm] << std::endl;
+        }
+        output << std::endl << std:: endl;
       }
-      output << std::endl << std:: endl;
     }
+    output.close();
+    output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".foldSNR");
+    output << "# period DM SNR" << std::endl;
+    output << std::fixed << std::setprecision(6);
+    for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
+      for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+        output << ((world.rank() % MPICols) * obs.getNrPeriods()) + period << " ";
+        output << ((world.rank() / MPIRows) * obs.getNrDMs()) + dm << " ";
+        output << snrFoldedTable[(period * obs.getNrPaddedDMs()) + dm] << std::endl;
+      }
+    }
+    output.close();
+    output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dediSNR");
+    output << "# DM SNR" << std::endl;
+    for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
+      output << dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
+    }
+    output.close();
   }
-  output.close();
-	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".foldSNR");
-  output << "# period DM SNR" << std::endl;
-  output << std::fixed << std::setprecision(6);
-	for ( unsigned int period = 0; period < obs.getNrPeriods(); period++ ) {
-		for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-      output << ((world.rank() % MPICols) * obs.getNrPeriods()) + period << " ";
-      output << ((world.rank() / MPIRows) * obs.getNrDMs()) + dm << " ";
-      output << snrFoldedTable[(period * obs.getNrPaddedDMs()) + dm] << std::endl;
-		}
-	}
-  output.close();
-	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dediSNR");
-  output << "# DM SNR" << std::endl;
-  for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-    output << dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
-  }
-	output.close();
   // Store statistics
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stats");
   output << "# searchTime inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err snrDedispersedTotal snrDedispersedAvg err foldingTotal foldingAvg err snrFoldedTotal snrFoldedAvg err outputCopyTotal outputCopyAvg err foldedTSCopyTotal foldedTSCopyAvg err" << std::endl;
