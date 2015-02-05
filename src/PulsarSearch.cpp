@@ -167,9 +167,10 @@ int main(int argc, char * argv[]) {
     loadTime.stop();
 	} else {
     if ( noData ) {
-      for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
-        input->at(second) = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
-        std::fill(input->at(second)->begin(), input->at(second)->end(), 42);
+      input->at(0) = new std::vector< dataType >(obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
+      std::fill(input->at(second)->begin(), input->at(second)->end(), 42);
+      for ( unsigned int second = 1; second < obs.getNrSeconds(); second++ ) {
+        input->at(second) = input->at(0);
       }
     } else {
       AstroData::generatePulsar(period, width, DM, obs, *input, random);
