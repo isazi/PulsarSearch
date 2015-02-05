@@ -550,7 +550,7 @@ int main(int argc, char * argv[]) {
         snrFoldedTime.stop();
       }
 		} catch ( cl::Error & err ) {
-			std::cerr << err.what() << std::endl;
+			std::cerr << err.what() <<" "  << err.err() << std::endl;
 			return 1;
 		}
 	}
