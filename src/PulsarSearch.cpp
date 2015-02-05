@@ -168,7 +168,7 @@ int main(int argc, char * argv[]) {
 	} else {
     if ( noData ) {
       for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
-        input->at(second) = new std::vector< T >(observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
+        input->at(second) = new std::vector< dataType >(observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
         std::fill(input->at(second)->begin(), input->at(second)->end(), 42);
       }
     } else {
