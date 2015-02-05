@@ -295,6 +295,7 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
   delete shifts;
+  delete code;
   code = isa::OpenCL::getTransposeOpenCL(transposeParameters[deviceName][obs.getNrDMs()], obs.getNrDMs(), obs.getNrSamplesPerSecond(), obs.getPadding(), vectorWidth[deviceName], dataName);
   try {
     transposeK = isa::OpenCL::compile("transpose", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -302,6 +303,7 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
+  delete code;
   code = PulsarSearch::getFoldingOpenCL(foldingParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()], dataName, obs);
   try {
     foldingK = isa::OpenCL::compile("folding", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -309,6 +311,7 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
+  delete code;
   code = PulsarSearch::getSNRDedispersedOpenCL(snrDParameters[deviceName][obs.getNrDMs()], dataName, obs);
   try {
     snrDedispersedK = isa::OpenCL::compile("snrDedispersed", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -316,6 +319,7 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
+  delete code;
   code = PulsarSearch::getSNRFoldedOpenCL(snrFParameters[deviceName][obs.getNrDMs()][obs.getNrPeriods()], dataName, obs);
   try {
     snrFoldedK = isa::OpenCL::compile("snrFolded", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
@@ -323,6 +327,7 @@ int main(int argc, char * argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }
+  delete code;
 
   // Set execution parameters
   if ( obs.getNrSamplesPerSecond() % (dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerBlock() * dedispersionParameters[deviceName][obs.getNrDMs()].getNrSamplesPerThread()) == 0 ) {
