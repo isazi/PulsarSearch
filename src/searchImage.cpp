@@ -26,6 +26,7 @@
 
 
 int main(int argc, char * argv[]) {
+  bool gray = false;
   unsigned int nrDMs = 0;
   unsigned int nrPeriods = 0;
   float minSNR = std::numeric_limits< float >::max();
@@ -37,11 +38,12 @@ int main(int argc, char * argv[]) {
 
   isa::utils::ArgumentList args(argc, argv);
   try {
+    gray = args.getSwitch("-gray");
     outFilename = args.getSwitchArgument< std::string >("-output");
     nrDMs = args.getSwitchArgument< unsigned int >("-dms");
     nrPeriods = args.getSwitchArgument< unsigned int >("-periods");
   } catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr << args.getName() << " -output ... -dms ... -periods ... input" << std::endl;
+    std::cerr << args.getName() << " [-gray] -output ... -dms ... -periods ... input" << std::endl;
     return 1;
   } catch ( std::exception & err ) {
     std::cerr << err.what() << std::endl;
@@ -89,14 +91,24 @@ int main(int argc, char * argv[]) {
     snrSpaceDim = maxSNR - minSNR;
   }
 
-  cimg_library::CImg< unsigned char > searchImage(nrDMs, nrPeriods, 1, 3);
-  AstroData::Color *colorMap = AstroData::getColorMap();
+  cimg_library::CImg< unsigned char > searchImage;
+  AstroData::Color * colorMap;
+  if ( gray ) {
+    searchImage = cimg_library::CImg< unsigned char >(nrDMs, nrPeriods, 1, 1);
+  } else {
+    searchImage = cimg_library::CImg< unsigned char >(nrDMs, nrPeriods, 1, 3);
+    colorMap = AstroData::getColorMap();
+  }
   for ( unsigned int period = 0; period < nrPeriods; period++ ) {
     for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
       float snr = snrSpace[(period * nrDMs) + DM];
-      searchImage(DM, (nrPeriods - 1) - period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getR();
-      searchImage(DM, (nrPeriods - 1) - period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getG();
-      searchImage((nrDMs - 1 ) - DM, (nrPeriods - 1) - period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0f) / snrSpaceDim)]).getB();
+      if ( gray ) {
+        searchImage(DM, (nrPeriods - 1) - period, 0, 0) = static_cast< unsigned char >(((snr - minSNR) * 256.0) / snrSpaceDim);
+      } else {
+        searchImage(DM, (nrPeriods - 1) - period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0) / snrSpaceDim)]).getR();
+        searchImage(DM, (nrPeriods - 1) - period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0) / snrSpaceDim)]).getG();
+        searchImage(DM, (nrPeriods - 1) - period, 0, 2) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0) / snrSpaceDim)]).getB();
+      }
     }
   }
   searchImage.save(outFilename.c_str());
