@@ -215,11 +215,11 @@ int main(int argc, char * argv[]) {
   std::vector< dataType > foldedData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
   std::vector< dataType > maxDedispersedTable(obs.getNrPaddedDMs());
   std::vector< float > meanDedispersedTable(obs.getNrPaddedDMs());
-  std::vector< float > rmsDedispersedTable(obs.getNrPaddedDMs());
+  std::vector< float > varianceDedispersedTable(obs.getNrPaddedDMs());
   std::vector< float > snrFoldedTable(obs.getNrPeriods() * obs.getNrPaddedDMs());
 
   // Device memory allocation and data transfers
-  cl::Buffer shifts_d, nrSamplesPerBin_d, dispersedData_d, dedispersedData_d, transposedData_d, foldedData_d, counterData0_d, counterData1_d, maxDedispersedTable_d, meanDedispersedTable_d, rmsDedispersedTable_d, snrFoldedTable_d;
+  cl::Buffer shifts_d, nrSamplesPerBin_d, dispersedData_d, dedispersedData_d, transposedData_d, foldedData_d, counterData0_d, counterData1_d, maxDedispersedTable_d, meanDedispersedTable_d, varianceDedispersedTable_d, snrFoldedTable_d;
 
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(unsigned int), 0, 0);
@@ -232,7 +232,7 @@ int main(int argc, char * argv[]) {
     counterData1_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPaddedPeriods() * sizeof(unsigned int), 0, 0);
     maxDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
     meanDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
-    rmsDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
+    varianceDedispersedTable_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrPaddedDMs() * sizeof(float), 0, 0);
     snrFoldedTable_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(float), 0, 0);
 
     // shifts_d
@@ -240,13 +240,13 @@ int main(int argc, char * argv[]) {
     // nrSamplesPerBin_d
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(nrSamplesPerBin_d, CL_TRUE, 0, nrSamplesPerBin->size() * sizeof(unsigned int), reinterpret_cast< void * >(nrSamplesPerBin->data()));
     delete nrSamplesPerBin;
-    // maxDedispersedTable_d, meanDedispersedTable_d, rmsDedispersedTable_d
+    // maxDedispersedTable_d, meanDedispersedTable_d, varianceDedispersedTable_d
     std::fill(maxDedispersedTable.begin(), maxDedispersedTable.end(), 0);
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
     std::fill(meanDedispersedTable.begin(), meanDedispersedTable.end(), 0);
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
-    std::fill(rmsDedispersedTable.begin(), rmsDedispersedTable.end(), 0);
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
+    std::fill(varianceDedispersedTable.begin(), varianceDedispersedTable.end(), 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(varianceDedispersedTable_d, CL_TRUE, 0, varianceDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(varianceDedispersedTable.data()));
     // foldedData_d
     std::vector< dataType > transferDataType(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
     std::fill(transferDataType.begin(), transferDataType.end(), 0);
@@ -268,7 +268,7 @@ int main(int argc, char * argv[]) {
     hostMemory += dispersedData.size() * sizeof(dataType);
     hostMemory += maxDedispersedTable.size() * sizeof(dataType);
     hostMemory += meanDedispersedTable.size() * sizeof(float);
-    hostMemory += rmsDedispersedTable.size() * sizeof(float);
+    hostMemory += varianceDedispersedTable.size() * sizeof(float);
     hostMemory += snrFoldedTable.size() * sizeof(float);
     deviceMemory += hostMemory;
     deviceMemory += shifts->size() * sizeof(unsigned int);
@@ -411,7 +411,7 @@ int main(int argc, char * argv[]) {
   snrDedispersedK->setArg(1, transposedData_d);
   snrDedispersedK->setArg(2, maxDedispersedTable_d);
   snrDedispersedK->setArg(3, meanDedispersedTable_d);
-  snrDedispersedK->setArg(4, rmsDedispersedTable_d);
+  snrDedispersedK->setArg(4, varianceDedispersedTable_d);
   snrFoldedK->setArg(0, foldedData_d);
   snrFoldedK->setArg(1, snrFoldedTable_d);
 
@@ -506,10 +506,10 @@ int main(int argc, char * argv[]) {
         if ( print && world.rank() == 0 ) {
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
-          clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
+          clQueues->at(clDeviceID)[0].enqueueReadBuffer(varianceDedispersedTable_d, CL_TRUE, 0, varianceDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(varianceDedispersedTable.data()));
           std::cout << std::fixed << std::setprecision(6);
           for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-            std::cout << dm << ": " << maxDedispersedTable[dm] << " " << meanDedispersedTable[dm] << " " << std::sqrt(rmsDedispersedTable[dm]) << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
+            std::cout << dm << ": " << maxDedispersedTable[dm] << " " << meanDedispersedTable[dm] << " " << std::sqrt(varianceDedispersedTable[dm]) << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(varianceDedispersedTable[dm]) << std::endl;
           }
           std::cout << std::endl;
         }
@@ -563,7 +563,7 @@ int main(int argc, char * argv[]) {
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrFoldedTable_d, CL_TRUE, 0, snrFoldedTable.size() * sizeof(float), reinterpret_cast< void * >(snrFoldedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
-    clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(varianceDedispersedTable_d, CL_TRUE, 0, varianceDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(varianceDedispersedTable.data()));
     outputCopyTime.stop();
     foldedTSCopyTime.start();
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
@@ -603,7 +603,7 @@ int main(int argc, char * argv[]) {
     output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".dediSNR");
     output << "# DM SNR" << std::endl;
     for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
-      output << dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(rmsDedispersedTable[dm]) << std::endl;
+      output << dm << " " << (maxDedispersedTable[dm] - meanDedispersedTable[dm]) / std::sqrt(varianceDedispersedTable[dm] / ((obs.getNrSamplesPerSecond() * (obs.getNrSeconds() - secondsToBuffer)) - 1)) << std::endl;
     }
     output.close();
   }
