@@ -19,6 +19,7 @@
 #include <utility>
 #include <map>
 #include <iomanip>
+#include <cstring>
 
 #include <ArgumentList.hpp>
 #include <utils.hpp>
