@@ -103,7 +103,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int DM = 0; DM < nrDMs; DM++ ) {
       float snr = snrSpace[(period * nrDMs) + DM];
       if ( gray ) {
-        searchImage(DM, (nrPeriods - 1) - period, 0, 0) = static_cast< unsigned char >(((snr - minSNR) * 255.0) / snrSpaceDim);
+        searchImage(DM, (nrPeriods - 1) - period, 0, 0) = 255 - static_cast< unsigned char >(((snr - minSNR) * 255.0) / snrSpaceDim);
       } else {
         searchImage(DM, (nrPeriods - 1) - period, 0, 0) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0) / snrSpaceDim)]).getR();
         searchImage(DM, (nrPeriods - 1) - period, 0, 1) = (colorMap[static_cast< unsigned int >(((snr - minSNR) * 256.0) / snrSpaceDim)]).getG();
