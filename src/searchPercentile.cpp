@@ -107,7 +107,9 @@ int main(int argc, char * argv[]) {
 
   if ( exclusive ) {
     exclusionMapDM = new bool [nrDMs];
+    std::memset(reinterpret_cast< void * >(exclusionMapDM, 0, nrDMs * sizeof(bool)));
     exclusionMapP = new bool [nrPeriods];
+    std::memset(reinterpret_cast< void * >(exclusionMapP, 0, nrDMs * sizeof(bool)));
   }
   outFile.open(outFilename);
   outFile << std::fixed;
