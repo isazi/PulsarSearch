@@ -92,17 +92,17 @@ int main(int argc, char * argv[]) {
   } catch ( isa::utils::EmptyCommandLine & err ) {
   }
 
-  // Print the mean
+  // Print mean, minimum and maximum SNR
   outFile.open(outFilename);
   outFile << std::fixed;
-  outFile << "# DM meanSNR" << std::endl;
+  outFile << "# DM mean min max" << std::endl;
   for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
-    outFile << dm << " " << snrDM[dm].getMean() << std::endl;
+    outFile << dm << " " << snrDM[dm].getMean() << " " << snrDM[dm].getMin() << " " << snrDM[dm].getMax() << std::endl;
   }
   outFile << std::endl << std::endl;
-  outFile << "# periodmeanSNR" << std::endl;
+  outFile << "# period mean min max" << std::endl;
   for ( unsigned int period = 0; period < nrPeriods; period++ ) {
-    outFile << period << " " << snrP[period].getMean() << std::endl;
+    outFile << period << " " << snrP[period].getMean() << " " << snrP[period].getMin() << " " << snrP[period].getMax() << std::endl;
   }
   outFile.close();
 
