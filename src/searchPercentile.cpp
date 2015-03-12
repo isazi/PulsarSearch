@@ -116,7 +116,7 @@ int main(int argc, char * argv[]) {
   ++item;
   if ( exclusive && (exclusionMapDM[(*item).second.first] || exclusionMapP[(*item).second.second]) ) {
     continue;
-  } else {
+  } else if ( exclusionMapDM[(*item).second.first] || exclusionMapP[(*item).second.second] ) {
     exclusionMapDM[(*item).second.first] = true;
     exclusionMapP[(*item).second.second] = true;
   }
