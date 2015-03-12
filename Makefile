@@ -45,7 +45,7 @@ DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/ColorMap.o $(UTILS)/bin/
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 
 
-all: bin/readConfiguration.o bin/PulsarSearch bin/searchImage bin/searchPercentile
+all: bin/readConfiguration.o bin/PulsarSearch bin/searchImage bin/searchPercentile bin/searchMean
 
 bin/readConfiguration.o: $(DEPS) $(KERNELS) include/readConfiguration.hpp src/readConfiguration.cpp
 	$(CC) -o bin/readConfiguration.o -c src/readConfiguration.cpp $(INCLUDES) $(CFLAGS)
@@ -58,6 +58,9 @@ bin/searchImage: $(DEPS) src/searchImage.cpp
 
 bin/searchPercentile: $(DEPS) src/searchPercentile.cpp
 	$(CC) -o bin/searchPercentile src/searchPercentile.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
+
+bin/searchMean: $(DEPS) src/searchMean.cpp
+	$(CC) -o bin/searchMean src/searchMean.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
