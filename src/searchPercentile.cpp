@@ -116,18 +116,19 @@ int main(int argc, char * argv[]) {
   outFile << std::fixed;
   outFile << "# DMIndex DM periodIndex period snr" << std::endl;
   for ( std::multimap< float, std::pair< unsigned int, unsigned int> >::const_reverse_iterator item = snrList.crend(); counter >= lowerLimit; counter-- ) {
-  ++item;
-  if ( exclusive && (exclusionMapDM[(*item).second.first] || exclusionMapP[(*item).second.second]) ) {
-    continue;
-  } else if ( exclusionMapDM[(*item).second.first] || exclusionMapP[(*item).second.second] ) {
-    exclusionMapDM[(*item).second.first] = true;
-    exclusionMapP[(*item).second.second] = true;
-  }
-  outFile << std::setprecision(2);
-  outFile << (*item).second.first << " " << firstDM + ((*item).second.first * stepDM) << " ";
-  outFile << std::setprecision(6);
-  outFile << (*item).second.second << " " << (firstPeriod + ((*item).second.second * stepPeriod)) / static_cast< float >(nrSamplesPerSecond) << " ";
-  outFile << (*item).first << std::endl;
+    ++item;
+    if ( exclusive && (exclusionMapDM[(*item).second.first] || exclusionMapP[(*item).second.second]) ) {
+      continue;
+    }
+    outFile << std::setprecision(2);
+    outFile << (*item).second.first << " " << firstDM + ((*item).second.first * stepDM) << " ";
+    outFile << std::setprecision(6);
+    outFile << (*item).second.second << " " << (firstPeriod + ((*item).second.second * stepPeriod)) / static_cast< float >(nrSamplesPerSecond) << " ";
+    outFile << (*item).first << std::endl;
+    if ( exclusive ) {
+      exclusionMapDM[(*item).second.first] = true;
+      exclusionMapP[(*item).second.second] = true;
+    }
   }
   delete [] exclusionMapDM;
   delete [] exclusionMapP;
