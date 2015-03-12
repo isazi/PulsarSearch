@@ -38,7 +38,7 @@ int main(int argc, char * argv[]) {
   std::ifstream searchFile;
   std::ofstream outFile;
   // Data
-  unsigned int percentile = 0;
+  float percentile = 0;
   std::multimap< float, std::pair< unsigned int, unsigned int > > snrList;
 
   isa::utils::ArgumentList args(argc, argv);
@@ -49,7 +49,7 @@ int main(int argc, char * argv[]) {
     firstPeriod = args.getSwitchArgument< unsigned int >("-period_first");
     stepPeriod = args.getSwitchArgument< unsigned int >("-period_step");
     nrSamplesPerSecond = args.getSwitchArgument< unsigned int >("-samples");
-    percentile = args.getSwitchArgument< unsigned int >("-percentile");
+    percentile = args.getSwitchArgument< float >("-percentile");
   } catch ( isa::utils::EmptyCommandLine & err ) {
     std::cerr << args.getName() << " -output ... -dm_first ... -dm_step ... -period_first ... -period_step ... -samples ... -percentile ... input" << std::endl;
     return 1;
@@ -91,7 +91,7 @@ int main(int argc, char * argv[]) {
   }
 
   // Print the percentile
-  unsigned int lowerLimit = (percentile * snrList.size()) / 100;
+  unsigned int lowerLimit = static_cast< unsigned int >((percentile * snrList.size()) / 100.0);
   unsigned int counter = snrList.size() - 1;
   outFile.open(outFilename);
   outFile << std::fixed;
