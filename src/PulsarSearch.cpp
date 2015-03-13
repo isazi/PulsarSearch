@@ -418,7 +418,8 @@ int main(int argc, char * argv[]) {
 	// Search loop
   cl::Event syncPoint;
   isa::utils::Timer searchTime;
-  isa::utils::Timer inputCopyTime;
+  isa::utils::Timer inputHandlingTime;
+  isa::utils::Timer inputCopy;
   isa::utils::Timer dedispTime;
   isa::utils::Timer transTime;
   isa::utils::Timer foldTime;
@@ -431,7 +432,7 @@ int main(int argc, char * argv[]) {
   searchTime.start();
 	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
 		// Load the input
-    inputCopyTime.start();
+    inputHandlingTime.start();
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
 			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
         memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(dataType));
@@ -439,7 +440,9 @@ int main(int argc, char * argv[]) {
       memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
 		}
     try {
+      inputCopy.start();
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
+      inputCopy.stop();
       if ( DEBUG ) {
         if ( print && world.rank() == 0 ) {
           std::cout << std::fixed << std::setprecision(3);
@@ -457,7 +460,7 @@ int main(int argc, char * argv[]) {
       std::cerr << err.what() << std::endl;
       return 1;
     }
-    inputCopyTime.stop();
+    inputHandlingTime.stop();
 
 		// Run the kernels
 		try {
@@ -609,9 +612,10 @@ int main(int argc, char * argv[]) {
   }
   // Store statistics
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stats");
-  output << "# searchTime inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err snrDedispersedTotal snrDedispersedAvg err foldingTotal foldingAvg err snrFoldedTotal snrFoldedAvg err outputCopyTotal outputCopyAvg err foldedTSCopyTotal foldedTSCopyAvg err" << std::endl;
+  output << "# searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err snrDedispersedTotal snrDedispersedAvg err foldingTotal foldingAvg err snrFoldedTotal snrFoldedAvg err outputCopyTotal outputCopyAvg err foldedTSCopyTotal foldedTSCopyAvg err" << std::endl;
   output << std::fixed << std::setprecision(6);
   output << searchTime.getTotalTime() << " ";
+  output << inputHandlingTime.getTotalTime() << " " << inputHandlingTime.getAverageTime() << " " << inputHandlingTime.getStandardDeviation() << " ";
   output << inputCopyTime.getTotalTime() << " " << inputCopyTime.getAverageTime() << " " << inputCopyTime.getStandardDeviation() << " ";
   output << dedispTime.getTotalTime() << " " << dedispTime.getAverageTime() << " " << dedispTime.getStandardDeviation() << " ";
   output << transTime.getTotalTime() << " " << transTime.getAverageTime() << " " << transTime.getStandardDeviation() << " ";
