@@ -419,7 +419,7 @@ int main(int argc, char * argv[]) {
   cl::Event syncPoint;
   isa::utils::Timer searchTime;
   isa::utils::Timer inputHandlingTime;
-  isa::utils::Timer inputCopy;
+  isa::utils::Timer inputCopyTime;
   isa::utils::Timer dedispTime;
   isa::utils::Timer transTime;
   isa::utils::Timer foldTime;
