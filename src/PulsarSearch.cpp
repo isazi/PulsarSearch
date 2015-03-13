@@ -440,9 +440,9 @@ int main(int argc, char * argv[]) {
       memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
 		}
     try {
-      inputCopy.start();
+      inputCopyTime.start();
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
-      inputCopy.stop();
+      inputCopyTime.stop();
       if ( DEBUG ) {
         if ( print && world.rank() == 0 ) {
           std::cout << std::fixed << std::setprecision(3);
