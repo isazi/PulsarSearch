@@ -34,7 +34,7 @@ LDFLAGS := -lm
 CL_LDFLAGS := $(LDFLAGS) -lOpenCL
 BOOST_LDFLAGS := -lboost_mpi -lboost_serialization 
 HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
-CIMG_LDFLAGS := $(LDFLAGS) -lX11 -fopenmp
+CIMG_LDFLAGS := $(LDFLAGS) -lX11
 
 CC := g++
 MPI := mpicxx
@@ -54,7 +54,7 @@ bin/PulsarSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODA
 	$(MPI) -o bin/PulsarSearch src/PulsarSearch.cpp bin/readConfiguration.o $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(BOOST_LIBS) $(BOOST_LDFLAGS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 bin/searchImage: $(DEPS) src/searchImage.cpp
-	$(CC) -o bin/searchImage src/searchImage.cpp $(DEPS) $(INCLUDES) -I"$(CIMG)/include" $(CIMG_LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/searchImage src/searchImage.cpp $(DEPS) $(INCLUDES) -I"$(CIMG)/include" $(CIMG_LDFLAGS) $(CFLAGS) -fopenmp
 
 bin/searchPercentile: $(DEPS) src/searchPercentile.cpp
 	$(CC) -o bin/searchPercentile src/searchPercentile.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
