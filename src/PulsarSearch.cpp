@@ -433,7 +433,9 @@ int main(int argc, char * argv[]) {
 	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
 		// Load the input
     inputHandlingTime.start();
+#pragma omp parallel for schedule(static, 1)
 		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
+#pragma omp parallel for schedule(static, 1)
 			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
         memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(dataType));
 			}
