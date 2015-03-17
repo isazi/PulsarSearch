@@ -612,8 +612,9 @@ int main(int argc, char * argv[]) {
   }
   // Store statistics
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stats");
-  output << "# searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err snrDedispersedTotal snrDedispersedAvg err foldingTotal foldingAvg err snrFoldedTotal snrFoldedAvg err outputCopyTotal outputCopyAvg err foldedTSCopyTotal foldedTSCopyAvg err" << std::endl;
+  output << "# nrDMs nrPeriods searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err snrDedispersedTotal snrDedispersedAvg err foldingTotal foldingAvg err snrFoldedTotal snrFoldedAvg err outputCopyTotal outputCopyAvg err foldedTSCopyTotal foldedTSCopyAvg err" << std::endl;
   output << std::fixed << std::setprecision(6);
+  output << obs.getNrDMs() << " " << obs.getNrPeriods() << " ";
   output << searchTime.getTotalTime() << " ";
   output << inputHandlingTime.getTotalTime() << " " << inputHandlingTime.getAverageTime() << " " << inputHandlingTime.getStandardDeviation() << " ";
   output << inputCopyTime.getTotalTime() << " " << inputCopyTime.getAverageTime() << " " << inputCopyTime.getStandardDeviation() << " ";
