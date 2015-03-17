@@ -441,7 +441,8 @@ int main(int argc, char * argv[]) {
 		}
     try {
       inputCopyTime.start();
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
+      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
+      syncPoint.wait();
       inputCopyTime.stop();
       if ( DEBUG ) {
         if ( print && world.rank() == 0 ) {
@@ -563,13 +564,25 @@ int main(int argc, char * argv[]) {
   // Copy output from device to host
 	try {
     outputCopyTime.start();
+<<<<<<< HEAD
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrFoldedTable_d, CL_TRUE, 0, snrFoldedTable.size() * sizeof(float), reinterpret_cast< void * >(snrFoldedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(varianceDedispersedTable_d, CL_TRUE, 0, varianceDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(varianceDedispersedTable.data()));
+=======
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(snrFoldedTable_d, CL_TRUE, 0, snrFoldedTable.size() * sizeof(float), reinterpret_cast< void * >(snrFoldedTable.data()), 0, &syncPoint);
+    syncPoint.wait();
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()), 0, &syncPoint);
+    syncPoint.wait();
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()), 0, &syncPoint);
+    syncPoint.wait();
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()), 0, &syncPoint);
+    syncPoint.wait();
+>>>>>>> bb4174a... More precise measures of memory transfers.
     outputCopyTime.stop();
     foldedTSCopyTime.start();
-    clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()), 0, &syncPoint);
+    syncPoint.wait();
     foldedTSCopyTime.stop();
   } catch ( cl::Error & err ) {
 		std::cerr << err.what() << std::endl;
