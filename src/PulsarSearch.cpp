@@ -55,6 +55,7 @@ int main(int argc, char * argv[]) {
   unsigned int MPIRows = 0;
   unsigned int MPICols = 0;
   unsigned int nrThreads = 0;
+  unsigned int bytesToSkip = 0;
 	std::string deviceName;
 	std::string dataFile;
 	std::string headerFile;
@@ -437,7 +438,7 @@ int main(int argc, char * argv[]) {
 
   world.barrier();
   searchTime.start();
-	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
+	for ( unsigned int second = 0; second < obs.getNrSeconds(); second++ ) {
 		// Load the input
     try {
       inputCopyTime.start();
@@ -550,7 +551,7 @@ int main(int argc, char * argv[]) {
           std::cout << std::endl;
         }
       }
-      if ( second == (obs.getNrSeconds() - secondsToBuffer) - 1 ) {
+      if ( second == obs.getNrSeconds() - 1 ) {
         snrFoldedTime.start();
         clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*snrFoldedK, cl::NullRange, snrFoldedGlobal, snrFoldedLocal, 0, &syncPoint);
         syncPoint.wait();
