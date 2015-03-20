@@ -523,7 +523,7 @@ int main(int argc, char * argv[]) {
         }
       }
       foldingK->setArg(0, second);
-			if ( second % 2 == 0 ) {
+			if ( (second - obs.getNrDelaySeconds()) % 2 == 0 ) {
         foldingK->setArg(3, counterData0_d);
         foldingK->setArg(4, counterData1_d);
 			} else {
