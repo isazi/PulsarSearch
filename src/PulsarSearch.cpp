@@ -442,7 +442,7 @@ int main(int argc, char * argv[]) {
 		// Load the input
     try {
       inputCopyTime.start();
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedSeconds[second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), reinterpret_cast< void * >(&(dispersedData.data()[second * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond()])), 0, &syncPoint);
+      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedSeconds[second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), reinterpret_cast< void * >(input->at(second)->data()), 0, &syncPoint);
       syncPoint.wait();
       inputCopyTime.stop();
       if ( DEBUG ) {
