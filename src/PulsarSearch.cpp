@@ -54,10 +54,7 @@ int main(int argc, char * argv[]) {
 	unsigned int clDeviceID = 0;
   unsigned int MPIRows = 0;
   unsigned int MPICols = 0;
-	unsigned int bytesToSkip = 0;
-  unsigned int secondsToBuffer = 0;
   unsigned int nrThreads = 0;
-  unsigned int remainingSamples = 0;
 	std::string deviceName;
 	std::string dataFile;
 	std::string headerFile;
@@ -205,11 +202,9 @@ int main(int argc, char * argv[]) {
 
 	// Host memory allocation
   std::vector< float > * shifts = PulsarSearch::getShifts(obs);
-  obs.setNrSamplesPerDispersedChannel(obs.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep()))));
-  secondsToBuffer = obs.getNrSamplesPerDispersedChannel() / obs.getNrSamplesPerSecond();
-  remainingSamples = obs.getNrSamplesPerDispersedChannel() % obs.getNrSamplesPerSecond();
+  obs.setNrDelaySeconds(static_cast< unsigned int >(std::ceil((obs.getNrSamplesPerSecond() + (shifts->at(0) * (obs.getFirstDM() + ((obs.getNrDMs() - 1) * obs.getDMStep())))) / obs.getNrSamplesPerSecond())));
   std::vector< unsigned int > * nrSamplesPerBin = PulsarSearch::getSamplesPerBin(obs);
-  std::vector< dataType > dispersedData(obs.getNrChannels() * obs.getNrSamplesPerDispersedChannel());
+  std::vector< dataType > dispersedData(obs.getNrDelaySeconds() * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond());
   std::vector< dataType > dedispersedData(obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond());
   std::vector< dataType > transposedData(obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs());
   std::vector< dataType > foldedData(obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs());
@@ -220,11 +215,24 @@ int main(int argc, char * argv[]) {
 
   // Device memory allocation and data transfers
   cl::Buffer shifts_d, nrSamplesPerBin_d, dispersedData_d, dedispersedData_d, transposedData_d, foldedData_d, counterData0_d, counterData1_d, maxDedispersedTable_d, meanDedispersedTable_d, rmsDedispersedTable_d, snrFoldedTable_d;
+  std::vector< cl::Buffer > dispersedSeconds(obs.getNrDelaySeconds());
 
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(unsigned int), 0, 0);
     nrSamplesPerBin_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, nrSamplesPerBin->size() * sizeof(unsigned int), 0, 0);
     dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), 0, 0);
+    for ( unsigned int second = 0; second < obs.getNrDelaySeconds(); second++ ) {
+      cl_buffer_region offsets;
+      cl_int err = 0;
+
+      offsets.origin = second * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
+      offset.size = obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
+      dispersedSeconds[second] = dispersedData_d.createSubBuffer(CL_MEM_READ_ONLY, CL_BUFFER_CREATE_TYPE_REGION, reinterpret_cast< void * >(&offsets), &err);
+      if ( err != CL_SUCCESS ) {
+        std::cerr << "Memory error: " << err << std::endl;
+        return 1;
+      }
+    }
     dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrDMs() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), 0, 0);
     transposedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrSamplesPerSecond() * obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
     foldedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, obs.getNrBins() * obs.getNrPeriods() * obs.getNrPaddedDMs() * sizeof(dataType), 0, 0);
@@ -418,7 +426,6 @@ int main(int argc, char * argv[]) {
 	// Search loop
   cl::Event syncPoint;
   isa::utils::Timer searchTime;
-  isa::utils::Timer inputHandlingTime;
   isa::utils::Timer inputCopyTime;
   isa::utils::Timer dedispTime;
   isa::utils::Timer transTime;
@@ -432,16 +439,9 @@ int main(int argc, char * argv[]) {
   searchTime.start();
 	for ( unsigned int second = 0; second < obs.getNrSeconds() - secondsToBuffer; second++ ) {
 		// Load the input
-    inputHandlingTime.start();
-		for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
-			for ( unsigned int chunk = 0; chunk < secondsToBuffer; chunk++ ) {
-        memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (chunk * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + chunk))->at(channel * obs.getNrSamplesPerPaddedSecond()))), obs.getNrSamplesPerSecond() * sizeof(dataType));
-			}
-      memcpy(reinterpret_cast< void * >(&(dispersedData.data()[(channel * obs.getNrSamplesPerDispersedChannel()) + (secondsToBuffer * obs.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input->at(second + secondsToBuffer))->at(channel * obs.getNrSamplesPerPaddedSecond()))), remainingSamples * sizeof(dataType));
-		}
     try {
       inputCopyTime.start();
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_TRUE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()), 0, &syncPoint);
+      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedSeconds[second % obs.getNrDelaySeconds()], CL_TRUE, 0, obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType), reinterpret_cast< void * >(&(dispersedData.data()[second * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond()])), 0, &syncPoint);
       syncPoint.wait();
       inputCopyTime.stop();
       if ( DEBUG ) {
@@ -449,8 +449,8 @@ int main(int argc, char * argv[]) {
           std::cout << std::fixed << std::setprecision(3);
           for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
             std::cout << channel << " : ";
-            for ( unsigned int sample = 0; sample < obs.getNrSamplesPerDispersedChannel(); sample++ ) {
-              std::cout << dispersedData[(channel * obs.getNrSamplesPerDispersedChannel()) + sample] << " ";
+            for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
+              std::cout << dispersedData[((second % obs.getNrDelaySeconds()) * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond()) + (channel * obs.getNrSamplesPerPaddedSecond()) + sample] << " ";
             }
             std::cout << std::endl;
           }
@@ -461,7 +461,9 @@ int main(int argc, char * argv[]) {
       std::cerr << err.what() << std::endl;
       return 1;
     }
-    inputHandlingTime.stop();
+    if ( second < obs.getNrDelaySeconds() ) {
+      continue;
+    }
 
 		// Run the kernels
 		try {
@@ -618,11 +620,10 @@ int main(int argc, char * argv[]) {
   }
   // Store statistics
 	output.open(outputFile + "_" + isa::utils::toString(world.rank()) + ".stats");
-  output << "# nrDMs nrPeriods searchTime inputHandlingTotal inputHandlingAvg err inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err snrDedispersedTotal snrDedispersedAvg err foldingTotal foldingAvg err snrFoldedTotal snrFoldedAvg err outputCopyTotal outputCopyAvg err foldedTSCopyTotal foldedTSCopyAvg err" << std::endl;
+  output << "# nrDMs nrPeriods searchTime inputCopyTotal inputCopyAvg err dedispersionTotal dedispersionvg err transposeTotal transposeAvg err snrDedispersedTotal snrDedispersedAvg err foldingTotal foldingAvg err snrFoldedTotal snrFoldedAvg err outputCopyTotal outputCopyAvg err foldedTSCopyTotal foldedTSCopyAvg err" << std::endl;
   output << std::fixed << std::setprecision(6);
   output << obs.getNrDMs() << " " << obs.getNrPeriods() << " ";
   output << searchTime.getTotalTime() << " ";
-  output << inputHandlingTime.getTotalTime() << " " << inputHandlingTime.getAverageTime() << " " << inputHandlingTime.getStandardDeviation() << " ";
   output << inputCopyTime.getTotalTime() << " " << inputCopyTime.getAverageTime() << " " << inputCopyTime.getStandardDeviation() << " ";
   output << dedispTime.getTotalTime() << " " << dedispTime.getAverageTime() << " " << dedispTime.getStandardDeviation() << " ";
   output << transTime.getTotalTime() << " " << transTime.getAverageTime() << " " << transTime.getStandardDeviation() << " ";
