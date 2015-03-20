@@ -266,7 +266,7 @@ int main(int argc, char * argv[]) {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(counterData0_d, CL_TRUE, 0, transferUInt.size() * sizeof(unsigned int), reinterpret_cast< void * >(transferUInt.data()));
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(counterData1_d, CL_TRUE, 0, transferUInt.size() * sizeof(unsigned int), reinterpret_cast< void * >(transferUInt.data()));
   } catch ( cl::Error & err ) {
-    std::cerr << err.what() << std::endl;
+    std::cerr << err.what() << " " << err.err() << std::endl;
     return 1;
   }
 
