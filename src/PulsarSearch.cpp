@@ -408,9 +408,9 @@ int main(int argc, char * argv[]) {
     std::cout << std::endl;
   }
 
-  dedispersionK->setArg(0, dispersedData_d);
-  dedispersionK->setArg(1, dedispersedData_d);
-  dedispersionK->setArg(2, shifts_d);
+  dedispersionK->setArg(1, dispersedData_d);
+  dedispersionK->setArg(2, dedispersedData_d);
+  dedispersionK->setArg(3, shifts_d);
   transposeK->setArg(0, dedispersedData_d);
   transposeK->setArg(1, transposedData_d);
   foldingK->setArg(1, transposedData_d);
@@ -468,6 +468,7 @@ int main(int argc, char * argv[]) {
 		// Run the kernels
 		try {
       dedispTime.start();
+      dedispersionK->setArg(0, second % obs.getNrDelaySeconds());
       clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*dedispersionK, cl::NullRange, dedispersionGlobal, dedispersionLocal, 0, &syncPoint);
       syncPoint.wait();
       dedispTime.stop();
