@@ -227,7 +227,7 @@ int main(int argc, char * argv[]) {
       cl_int err = 0;
 
       offsets.origin = second * obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
-      offset.size = obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
+      offsets.size = obs.getNrChannels() * obs.getNrSamplesPerPaddedSecond() * sizeof(dataType);
       dispersedSeconds[second] = dispersedData_d.createSubBuffer(CL_MEM_READ_ONLY, CL_BUFFER_CREATE_TYPE_REGION, reinterpret_cast< void * >(&offsets), &err);
       if ( err != CL_SUCCESS ) {
         std::cerr << "Memory error: " << err << std::endl;
