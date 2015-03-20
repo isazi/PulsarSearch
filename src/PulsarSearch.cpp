@@ -522,7 +522,7 @@ int main(int argc, char * argv[]) {
           std::cout << std::endl;
         }
       }
-      foldingK->setArg(0, second);
+      foldingK->setArg(0, second - obs.getNrDelaySeconds());
 			if ( (second - obs.getNrDelaySeconds()) % 2 == 0 ) {
         foldingK->setArg(3, counterData0_d);
         foldingK->setArg(4, counterData1_d);
