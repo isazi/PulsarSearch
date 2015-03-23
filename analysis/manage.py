@@ -31,7 +31,7 @@ def load_file(queue, table, input_file):
     for line in input_file:
         if (line[0] != "#") and (line[0] != "\n"):
             items = line.split(sep=" ")
-            queue.execute("INSERT INTO " + table + " VALUES (NULL, " + items[0] + ", " + items[1] + ", " + items[2] + ", " + items[3] + ", " + items[9] + ", " + items[12] + ", " + items[15] + ", " + items[18] + ", " + items[21] + ", " + str(float(items[24]) + float(items[27])) + ")")
+            queue.execute("INSERT INTO " + table + " VALUES (NULL, " + items[0] + ", " + items[1] + ", " + items[2] + ", " + items[3] + ", " + items[6] + ", " + items[9] + ", " + items[12] + ", " + items[15] + ", " + items[18] + ", " + str(float(items[21]) + float(items[24])) + ")")
 
 def print_results(confs):
     """Print the result tuples."""
