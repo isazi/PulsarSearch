@@ -67,6 +67,14 @@ int main(int argc, char * argv[]) {
   unsigned int period = 0;
   unsigned int width = 0;
   float DM = 0;
+  // Configurations
+  AstroData::paddingConf padding;
+  AstroData::vectorWidthConf vectorWidth;
+  PulsarSearch::tunedDedispersionConf dedispersionParameters;
+  isa::OpenCL::tunedTransposeConf transposeParameters;
+  PulsarSearch::tunedFoldingConf foldingParameters;
+  PulsarSearch::tunedSNRDedispersedConf snrDParameters;
+  PulsarSearch::tunedSNRFoldedConf snrFParameters;
 
 	// Initialize MPI
 	boost::mpi::environment envMPI(argc, argv);
@@ -81,13 +89,13 @@ int main(int argc, char * argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
 		deviceName = args.getSwitchArgument< std::string >("-device_name");
 
-		readPadding(padding, args.getSwitchArgument< std::string >("-padding_file"));
-		readVectorWidth(vectorWidth, args.getSwitchArgument< std::string >("-vector_file"));
-		readDedispersion(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
-		readTranspose(transposeParameters, args.getSwitchArgument< std::string >("-transpose_file"));
-		readFolding(foldingParameters, args.getSwitchArgument< std::string >("-folding_file"));
-		readSNRD(snrDParameters, args.getSwitchArgument< std::string >("-snrd_file"));
-		readSNRF(snrFParameters, args.getSwitchArgument< std::string >("-snrf_file"));
+    AstroData::readPaddingConf(padding, args.getSwitchArgument< std::string >("-padding_file"));
+    AstroData::readVectorWidthConf(vectorWidth, args.getSwitchArgument< std::string >("-vector_file"));
+    PulsarSearch::readTunedDedispersionConf(dedispersionParameters, args.getSwitchArgument< std::string >("-dedispersion_file"));
+    isa::OpenCL::readTunedTransposeConf(transposeParameters, args.getSwitchArgument< std::string >("-transpose_file"));
+    PulsarSearch::readTunedFoldingConf(foldingParameters, args.getSwitchArgument< std::string >("-folding_file"));
+    PulsarSearch::readTunedSNRDedispersedConf(snrDParameters, args.getSwitchArgument< std::string >("-snrd_file"));
+		PulsarSearch::readTunedSNRFoldedConf(snrFParameters, args.getSwitchArgument< std::string >("-snrf_file"));
 
     print = args.getSwitch("-print");
     saveOutput = args.getSwitch("-save_output");
