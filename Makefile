@@ -41,17 +41,14 @@ MPI := mpicxx
 
 # Dependencies
 KERNELS := $(DEDISPERSION)/bin/Shifts.o $(DEDISPERSION)/bin/Dedispersion.o $(TRANSPOSE)/bin/Transpose.o $(FOLDING)/bin/Bins.o $(FOLDING)/bin/Folding.o $(SNR)/bin/SNR.o
-DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/ColorMap.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o
+DEPS := $(ASTRODATA)/bin/Observation.o $(ASTRODATA)/bin/ColorMap.o $(ASTRODATA)/bin/Platform.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 
 
-all: bin/readConfiguration.o bin/PulsarSearch bin/searchImage bin/searchPercentile bin/searchMean
+all: bin/PulsarSearch bin/searchImage bin/searchPercentile bin/searchMean
 
-bin/readConfiguration.o: $(DEPS) $(KERNELS) include/readConfiguration.hpp src/readConfiguration.cpp
-	$(CC) -o bin/readConfiguration.o -c src/readConfiguration.cpp $(INCLUDES) $(CFLAGS)
-
-bin/PulsarSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp bin/readConfiguration.o include/configuration.hpp src/PulsarSearch.cpp
-	$(MPI) -o bin/PulsarSearch src/PulsarSearch.cpp bin/readConfiguration.o $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(BOOST_LIBS) $(BOOST_LDFLAGS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
+bin/PulsarSearch: $(DEPS) $(KERNELS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/include/Generator.hpp include/configuration.hpp src/PulsarSearch.cpp
+	$(MPI) -o bin/PulsarSearch src/PulsarSearch.cpp $(KERNELS) $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(BOOST_LIBS) $(BOOST_LDFLAGS) $(HDF5_LDFLAGS) $(CL_LDFLAGS) $(CFLAGS)
 
 bin/searchImage: $(DEPS) src/searchImage.cpp
 	$(CC) -o bin/searchImage src/searchImage.cpp $(DEPS) $(INCLUDES) -I"$(CIMG)/include" $(CIMG_LDFLAGS) $(CFLAGS) -fopenmp
