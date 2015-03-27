@@ -23,7 +23,6 @@
 #include <boost/mpi.hpp>
 
 #include <configuration.hpp>
-#include <readConfiguration.hpp>
 
 #include <ArgumentList.hpp>
 #include <utils.hpp>
