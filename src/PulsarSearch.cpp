@@ -28,6 +28,7 @@
 #include <utils.hpp>
 #include <Timer.hpp>
 #include <Observation.hpp>
+#include <Platform.hpp>
 #include <ReadData.hpp>
 #include <Generator.hpp>
 #include <InitializeOpenCL.hpp>
