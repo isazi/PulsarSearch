@@ -441,7 +441,7 @@ int main(int argc, char * argv[]) {
       syncPoint.wait();
       inputCopyTime.stop();
       if ( DEBUG ) {
-        if ( print == 0 ) {
+        if ( print ) {
           std::cout << std::fixed << std::setprecision(3);
           for ( unsigned int channel = 0; channel < obs.getNrChannels(); channel++ ) {
             std::cout << channel << " : ";
@@ -466,7 +466,7 @@ int main(int argc, char * argv[]) {
       syncPoint.wait();
       dedispTime.stop();
       if ( DEBUG ) {
-        if ( print == 0 ) {
+        if ( print ) {
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
           std::cout << std::fixed << std::setprecision(3);
           for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
@@ -484,7 +484,7 @@ int main(int argc, char * argv[]) {
       syncPoint.wait();
       transTime.stop();
       if ( DEBUG ) {
-        if ( print == 0 ) {
+        if ( print ) {
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(transposedData_d, CL_TRUE, 0, transposedData.size() * sizeof(dataType), reinterpret_cast< void * >(transposedData.data()));
           std::cout << std::fixed << std::setprecision(3);
           for ( unsigned int sample = 0; sample < obs.getNrSamplesPerSecond(); sample++ ) {
@@ -503,7 +503,7 @@ int main(int argc, char * argv[]) {
       syncPoint.wait();
       snrDedispersedTime.stop();
       if ( DEBUG ) {
-        if ( print == 0 ) {
+        if ( print ) {
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(maxDedispersedTable_d, CL_TRUE, 0, maxDedispersedTable.size() * sizeof(dataType), reinterpret_cast< void * >(maxDedispersedTable.data()));
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(meanDedispersedTable_d, CL_TRUE, 0, meanDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(meanDedispersedTable.data()));
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(rmsDedispersedTable_d, CL_TRUE, 0, rmsDedispersedTable.size() * sizeof(float), reinterpret_cast< void * >(rmsDedispersedTable.data()));
@@ -527,7 +527,7 @@ int main(int argc, char * argv[]) {
       syncPoint.wait();
       foldTime.stop();
       if ( DEBUG ) {
-        if ( print == 0 ) {
+        if ( print ) {
           clQueues->at(clDeviceID)[0].enqueueReadBuffer(foldedData_d, CL_TRUE, 0, foldedData.size() * sizeof(dataType), reinterpret_cast< void * >(foldedData.data()));
           std::cout << std::fixed << std::setprecision(3);
           for ( unsigned int dm = 0; dm < obs.getNrDMs(); dm++ ) {
